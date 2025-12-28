@@ -173,6 +173,7 @@
             animation: slideDown 0.5s ease;
             max-width: 90%;
             text-align: center;
+            word-break: break-word;
         }
         @keyframes slideDown {
             from { top: -100px; }
@@ -277,6 +278,22 @@
             text-align: center;
             margin: 10px 0;
             border: 1px solid #00ffaa;
+            word-break: break-all;
+            overflow-wrap: break-word;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+        .ref-link {
+            font-size: 12px;
+            background: rgba(255,255,255,0.1);
+            padding: 8px;
+            border-radius: 8px;
+            margin: 10px 0;
+            word-break: break-all;
+            overflow-wrap: break-word;
+            max-width: 100%;
+            overflow-x: hidden;
+            font-family: monospace;
         }
         .copy-btn {
             background: #3366ff;
@@ -286,15 +303,85 @@
             border-radius: 5px;
             cursor: pointer;
             margin-top: 10px;
+            width: 100%;
+        }
+        .nickname-input {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid #00ffaa;
+            border-radius: 10px;
+            padding: 12px;
+            color: white;
+            font-size: 16px;
+            width: 100%;
+            margin: 10px 0;
+            text-align: center;
+        }
+        .nickname-btn {
+            background: linear-gradient(135deg, #00ffaa, #00cc88);
+            color: black;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .player-nickname {
+            color: #00ffaa;
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .nickname-change {
+            color: #888;
+            font-size: 12px;
+            text-align: center;
+            margin-top: 5px;
+            cursor: pointer;
+        }
+        .shortened-link {
+            font-size: 12px;
+            color: #00ffaa;
+            margin-top: 5px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- МОДАЛКА ВВОДА НИКА -->
+    <div class="modal" id="nickname-modal" style="display: flex;">
+        <div class="modal-content">
+            <h2 class="modal-title">🎮 ВВЕДИТЕ ВАШ НИК</h2>
+            <p style="text-align:center;margin-bottom:20px;color:#aaa;">
+                Этот ник будет отображаться в топе игроков
+            </p>
+            
+            <input type="text" id="nickname-input" class="nickname-input" 
+                   placeholder="Введите ник (3-15 символов)" maxlength="15">
+            
+            <div id="nickname-error" style="color:#ff3366;text-align:center;margin:10px 0;display:none;">
+                Ник должен быть от 3 до 15 символов
+            </div>
+            
+            <button class="nickname-btn" onclick="saveNickname()">
+                СОХРАНИТЬ И НАЧАТЬ ИГРУ
+            </button>
+            
+            <div style="text-align:center;margin-top:15px;color:#888;font-size:12px;">
+                Вы сможете изменить ник позже в настройках
+            </div>
+        </div>
+    </div>
+
+    <!-- ОСНОВНОЙ ИНТЕРФЕЙС -->
+    <div class="container" id="main-game" style="display:none;">
         <div class="header">
             <div class="game-title" onclick="window.open('https://t.me/visaclicker', '_blank')">
                 🎮 VISA CLICKER
             </div>
+            <div class="player-nickname" id="player-nickname"></div>
+            <div class="nickname-change" onclick="changeNickname()">✏️ Изменить ник</div>
             <div class="subtitle">Зарабатывай VISA, собирай подарки, становись лучшим!</div>
         </div>
 
@@ -324,7 +411,7 @@
                         <div class="bar-fill energy-bar" id="energy-fill"></div>
                     </div>
                 </div>
-                <div class="stat-label" id="energy-time"></div>
+                <div class="stat-label" id="energy-time">Полная</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">КЛИКОВ</div>
@@ -419,7 +506,7 @@
             sessionClicks: 0,
             energy: 50,
             maxEnergy: 50,
-            energyPerClick: 20, // Каждые 20 кликов -1 энергия
+            energyPerClick: 20,
             lastEnergyUpdate: Date.now(),
             refCode: generateRefCode(),
             refCount: 0,
@@ -433,54 +520,25 @@
                 power: 500,
                 auto: 1000,
                 energy: 2000
-            }
+            },
+            nickname: "",
+            userId: getUserId()
         };
 
-        // XP ТАБЛИЦА (уровень → нужно XP)
+        // XP ТАБЛИЦА
         const xpTable = {
-            1: 50,    // Уровень 2
-            2: 150,   // Уровень 3  
-            3: 300,   // Уровень 4
-            4: 500,   // Уровень 5
-            5: 750,   // Уровень 6
-            6: 1050,  // Уровень 7
-            7: 1400,  // Уровень 8
-            8: 1800,  // Уровень 9
-            9: 2250,  // Уровень 10
-            10: 2750  // Уровень 11
+            1: 50, 2: 150, 3: 300, 4: 500, 5: 750,
+            6: 1050, 7: 1400, 8: 1800, 9: 2250, 10: 2750
         };
 
-        // ЭНЕРГИЯ - восстановление
-        const ENERGY_RESTORE_TIME = 30 * 60 * 1000; // 30 минут в мс
+        const ENERGY_RESTORE_TIME = 1 * 60 * 1000; // 1 МИНУТА для теста
+        const API_URL = ""; // Оставьте пустым для localStorage
+        let lastEnergyValue = 50;
+        let energyRestoredNotified = false;
 
         // ГЕНЕРАЦИЯ РЕФ.КОДА
         function generateRefCode() {
             return 'REF' + Math.random().toString(36).substr(2, 6).toUpperCase();
-        }
-
-        // ИНИЦИАЛИЗАЦИЯ
-        function initGame() {
-            loadGame();
-            updateDisplay();
-            
-            // Запуск таймеров
-            setInterval(updateEnergy, 1000);
-            setInterval(saveGame, 30000); // Автосохранение каждые 30 сек
-            setInterval(autoClick, 1000); // Автокликеры
-            
-            // Интеграция с Telegram
-            if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
-                Telegram.WebApp.ready();
-                Telegram.WebApp.expand();
-                Telegram.WebApp.setHeaderColor('#0a0a2a');
-                Telegram.WebApp.setBackgroundColor('#0a0a2a');
-                
-                // Отправка данных в бота
-                Telegram.WebApp.sendData(JSON.stringify({
-                    action: 'game_started',
-                    userId: getUserId()
-                }));
-            }
         }
 
         // ПОЛУЧЕНИЕ USER ID
@@ -492,54 +550,165 @@
         }
 
         function generateUserId() {
-            const id = 'user_' + Math.random().toString(36).substr(2, 9);
+            const id = 'user_' + Date.now() + Math.random().toString(36).substr(2, 5);
             localStorage.setItem('user_id', id);
             return id;
         }
 
+        // ИНИЦИАЛИЗАЦИЯ
+        function initGame() {
+            loadGame();
+            
+            // Проверка ника
+            if (!gameState.nickname || gameState.nickname.trim().length < 3) {
+                document.getElementById('nickname-modal').style.display = 'flex';
+                document.getElementById('main-game').style.display = 'none';
+                document.getElementById('nickname-input').focus();
+            } else {
+                document.getElementById('nickname-modal').style.display = 'none';
+                document.getElementById('main-game').style.display = 'block';
+                document.getElementById('player-nickname').textContent = `👤 ${gameState.nickname}`;
+                updateDisplay();
+            }
+            
+            // Запуск таймеров
+            setInterval(updateEnergy, 1000); // Каждую секунду
+            setInterval(saveGame, 30000); // Автосохранение
+            setInterval(autoClick, 1000); // Автокликеры
+            
+            // Интеграция с Telegram
+            if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
+                Telegram.WebApp.ready();
+                Telegram.WebApp.expand();
+                Telegram.WebApp.setHeaderColor('#0a0a2a');
+                Telegram.WebApp.setBackgroundColor('#0a0a2a');
+            }
+            
+            console.log("Игра инициализирована, энергия:", gameState.energy);
+        }
+
+        // СОХРАНЕНИЕ НИКА
+        function saveNickname() {
+            const nickname = document.getElementById('nickname-input').value.trim();
+            const errorDiv = document.getElementById('nickname-error');
+            
+            if (nickname.length < 3 || nickname.length > 15) {
+                errorDiv.style.display = 'block';
+                errorDiv.textContent = 'Ник должен быть от 3 до 15 символов';
+                return;
+            }
+            
+            gameState.nickname = nickname;
+            document.getElementById('player-nickname').textContent = `👤 ${nickname}`;
+            document.getElementById('nickname-modal').style.display = 'none';
+            document.getElementById('main-game').style.display = 'block';
+            
+            // Сохраняем
+            saveGame();
+            
+            // Отправляем в бота
+            sendToBot('nickname_set', {
+                nickname: nickname,
+                userId: gameState.userId
+            });
+            
+            showNotification(`✅ Ник "${nickname}" сохранен!`, 'success');
+        }
+
+        // ИЗМЕНИТЬ НИК
+        function changeNickname() {
+            const currentNickname = gameState.nickname || '';
+            document.getElementById('nickname-input').value = currentNickname;
+            document.getElementById('nickname-error').style.display = 'none';
+            document.getElementById('nickname-modal').style.display = 'flex';
+            document.getElementById('main-game').style.display = 'none';
+            document.getElementById('nickname-input').focus();
+        }
+
         // ЗАГРУЗКА СОХРАНЕНИЙ
         function loadGame() {
-            const saved = localStorage.getItem('visaclicker_save_v2');
+            const saved = localStorage.getItem('visaclicker_save_v3');
             if (saved) {
                 try {
                     const data = JSON.parse(saved);
-                    Object.assign(gameState, data);
+                    
+                    // Восстановление данных
+                    gameState.visa = data.visa || 0;
+                    gameState.level = data.level || 1;
+                    gameState.xp = data.xp || 0;
+                    gameState.xpRequired = data.xpRequired || 50;
+                    gameState.clickPower = data.clickPower || 5;
+                    gameState.autoClickers = data.autoClickers || 0;
+                    gameState.gifts = data.gifts || 0;
+                    gameState.giftChance = data.giftChance || 0.05;
+                    gameState.totalClicks = data.totalClicks || 0;
+                    gameState.maxEnergy = data.maxEnergy || 50;
+                    gameState.energy = data.energy || gameState.maxEnergy;
+                    gameState.nickname = data.nickname || "";
+                    gameState.refCode = data.refCode || generateRefCode();
+                    gameState.refCount = data.refCount || 0;
+                    gameState.upgrades = data.upgrades || { power: 0, auto: 0, energy: 0 };
+                    gameState.prices = data.prices || { power: 500, auto: 1000, energy: 2000 };
                     
                     // Восстановление энергии
                     const now = Date.now();
-                    const timePassed = now - (gameState.lastEnergyUpdate || now);
-                    const energyToRestore = Math.floor(timePassed / (ENERGY_RESTORE_TIME / gameState.maxEnergy));
+                    const lastUpdate = data.lastEnergyUpdate || now;
+                    const timePassed = now - lastUpdate;
                     
-                    gameState.energy = Math.min(
-                        gameState.maxEnergy,
-                        gameState.energy + energyToRestore
-                    );
+                    if (gameState.energy < gameState.maxEnergy) {
+                        const restorePerSecond = gameState.maxEnergy / (30 * 60); // 30 минут на полную
+                        const restored = Math.floor(timePassed / 1000 * restorePerSecond);
+                        gameState.energy = Math.min(gameState.maxEnergy, gameState.energy + restored);
+                        console.log(`Восстановлено энергии: ${restored}, теперь: ${gameState.energy}`);
+                    }
+                    
                     gameState.lastEnergyUpdate = now;
+                    
                 } catch(e) {
                     console.error('Ошибка загрузки:', e);
                 }
             }
+            lastEnergyValue = gameState.energy;
         }
 
         // СОХРАНЕНИЕ ИГРЫ
         function saveGame() {
             gameState.lastEnergyUpdate = Date.now();
-            localStorage.setItem('visaclicker_save_v2', JSON.stringify(gameState));
+            localStorage.setItem('visaclicker_save_v3', JSON.stringify(gameState));
         }
 
-        // ОБНОВЛЕНИЕ ЭНЕРГИИ
+        // ОБНОВЛЕНИЕ ЭНЕРГИИ (ИСПРАВЛЕННОЕ)
         function updateEnergy() {
             const now = Date.now();
             const timePassed = now - gameState.lastEnergyUpdate;
             
             if (gameState.energy < gameState.maxEnergy) {
-                const energyPerMs = gameState.maxEnergy / ENERGY_RESTORE_TIME;
-                const restored = Math.floor(timePassed * energyPerMs);
+                // Восстановление 1 энергии каждые 36 секунд (30 минут / 50 энергии)
+                const restorePerMs = gameState.maxEnergy / (30 * 60 * 1000); // Полная за 30 минут
+                const restored = Math.floor(timePassed * restorePerMs);
                 
                 if (restored > 0) {
+                    const oldEnergy = gameState.energy;
                     gameState.energy = Math.min(gameState.maxEnergy, gameState.energy + restored);
                     gameState.lastEnergyUpdate = now;
-                    updateEnergyDisplay();
+                    
+                    // Уведомление о восстановлении
+                    if (gameState.energy > oldEnergy) {
+                        updateEnergyDisplay();
+                        
+                        // Уведомление в боте при полном восстановлении
+                        if (gameState.energy === gameState.maxEnergy && !energyRestoredNotified) {
+                            sendToBot('energy_restored', {
+                                energy: gameState.energy,
+                                maxEnergy: gameState.maxEnergy
+                            });
+                            energyRestoredNotified = true;
+                        }
+                        
+                        if (gameState.energy < gameState.maxEnergy) {
+                            energyRestoredNotified = false;
+                        }
+                    }
                 }
             }
             
@@ -555,9 +724,9 @@
             }
             
             const missingEnergy = gameState.maxEnergy - gameState.energy;
-            const timeToRestore = Math.ceil((missingEnergy * ENERGY_RESTORE_TIME) / gameState.maxEnergy);
-            const minutes = Math.floor(timeToRestore / 60000);
-            const seconds = Math.floor((timeToRestore % 60000) / 1000);
+            const timeToRestore = Math.ceil(missingEnergy * (30 * 60) / gameState.maxEnergy); // секунды
+            const minutes = Math.floor(timeToRestore / 60);
+            const seconds = timeToRestore % 60;
             
             document.getElementById('energy-time').textContent = 
                 `${minutes}:${seconds.toString().padStart(2, '0')}`;
@@ -569,6 +738,12 @@
             document.getElementById('energy-fill').style.width = energyPercent + '%';
             document.getElementById('energy').textContent = 
                 `${Math.floor(gameState.energy)}/${gameState.maxEnergy}`;
+            
+            // Проверка полного восстановления
+            if (Math.floor(gameState.energy) === gameState.maxEnergy && Math.floor(lastEnergyValue) < gameState.maxEnergy) {
+                showNotification('⚡ Энергия полностью восстановлена!', 'success');
+            }
+            lastEnergyValue = gameState.energy;
         }
 
         // ОСНОВНОЙ КЛИК
@@ -585,7 +760,7 @@
             // Трата энергии (каждые 20 кликов -1 энергия)
             gameState.sessionClicks++;
             if (gameState.sessionClicks % gameState.energyPerClick === 0) {
-                gameState.energy--;
+                gameState.energy = Math.max(0, gameState.energy - 1);
                 updateEnergyDisplay();
             }
             
@@ -612,7 +787,8 @@
             sendToBot('click', {
                 visa: gameState.visa,
                 level: gameState.level,
-                clicks: gameState.totalClicks
+                clicks: gameState.totalClicks,
+                nickname: gameState.nickname
             });
         }
 
@@ -620,13 +796,14 @@
         function createClickEffect() {
             const target = document.getElementById('click-target');
             const rect = target.getBoundingClientRect();
-            const x = rect.left + rect.width / 2;
-            const y = rect.top + rect.height / 2;
+            const x = rect.left + rect.width / 2 + (Math.random() - 0.5) * 50;
+            const y = rect.top + rect.height / 2 + (Math.random() - 0.5) * 50;
             
             const effect = document.createElement('div');
             effect.className = 'click-effect';
             effect.style.left = x + 'px';
             effect.style.top = y + 'px';
+            effect.style.background = `hsl(${Math.random() * 60 + 30}, 100%, 50%)`;
             
             document.body.appendChild(effect);
             setTimeout(() => effect.remove(), 600);
@@ -648,7 +825,8 @@
                 // Отправка в бота
                 sendToBot('level_up', {
                     level: gameState.level,
-                    reward: reward
+                    reward: reward,
+                    nickname: gameState.nickname
                 });
             }
         }
@@ -693,7 +871,7 @@
         // СОБРАТЬ ПОДАРОК
         function collectGift() {
             gameState.gifts++;
-            gameState.giftChance = Math.max(0.01, gameState.giftChance * 0.9); // Уменьшаем шанс
+            gameState.giftChance = Math.max(0.01, gameState.giftChance * 0.95); // Уменьшаем шанс на 5%
             
             const gift = document.getElementById('gift');
             gift.style.display = 'none';
@@ -710,7 +888,9 @@
             sendToBot('gift_collected', {
                 gifts: gameState.gifts,
                 reward: reward,
-                chance: gameState.giftChance
+                chance: gameState.giftChance,
+                nickname: gameState.nickname,
+                visa: gameState.visa
             });
         }
 
@@ -785,7 +965,7 @@
                         gameState.visa -= cost;
                         gameState.clickPower += 5;
                         gameState.upgrades.power++;
-                        gameState.prices.power = Math.floor(cost * 1.5); // Увеличиваем цену
+                        gameState.prices.power = Math.floor(cost * 1.5);
                         success = true;
                         message = '✅ Сила клика увеличена!';
                     }
@@ -807,11 +987,13 @@
                     cost = gameState.prices.energy;
                     if (gameState.visa >= cost) {
                         gameState.visa -= cost;
+                        const oldEnergy = gameState.maxEnergy;
                         gameState.maxEnergy += 10;
+                        gameState.energy += 10; // Добавляем энергию сразу
                         gameState.upgrades.energy++;
                         gameState.prices.energy = Math.floor(cost * 1.5);
                         success = true;
-                        message = '✅ Ёмкость энергии увеличена!';
+                        message = `✅ Ёмкость энергии увеличена до ${gameState.maxEnergy}!`;
                     }
                     break;
                     
@@ -834,7 +1016,8 @@
                 
                 sendToBot('upgrade_bought', {
                     type: type,
-                    cost: cost
+                    cost: cost,
+                    nickname: gameState.nickname
                 });
             } else {
                 showNotification('❌ Недостаточно VISA!', 'warning');
@@ -848,9 +1031,9 @@
                 gameState.visa += clicks * gameState.clickPower;
                 gameState.totalClicks += clicks;
                 
-                // Трата энергии
-                if (gameState.totalClicks % gameState.energyPerClick === 0) {
-                    gameState.energy--;
+                // Трата энергии (реже чем ручные клики)
+                if (Date.now() % 10 === 0) { // Примерно раз в 10 секунд
+                    gameState.energy = Math.max(0, gameState.energy - 1);
                     updateEnergyDisplay();
                 }
                 
@@ -901,81 +1084,126 @@
             showNotification('🎁 Функция "Мои подарки" скоро будет доступна!', 'info');
         }
 
-        // ТОП ИГРОКОВ
+        // ТОП ИГРОКОВ (С РЕАЛЬНЫМИ ДАННЫМИ ИЗ LOCALSTORAGE)
         function openTop() {
             const modal = document.getElementById('top-modal');
             const content = document.getElementById('top-content');
             
-            // Временные данные (в реальности будут с сервера)
-            const topGifts = [
-                { name: "ProGamer", value: 150 },
-                { name: "ClickKing", value: 120 },
-                { name: "VisaMaster", value: 95 },
-                { name: "You", value: gameState.gifts },
-                { name: "LuckyBoy", value: 45 }
-            ].sort((a,b) => b.value - a.value);
+            // Собираем топ из localStorage всех игроков
+            const allPlayers = [];
             
-            const topClicks = [
-                { name: "ClickMaster", value: 15000 },
-                { name: "FastFinger", value: 12500 },
-                { name: "AutoKing", value: 9800 },
-                { name: "You", value: gameState.totalClicks },
-                { name: "Newbie", value: 2500 }
-            ].sort((a,b) => b.value - a.value);
+            // Проходим по всем ключам localStorage
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('visaclicker_save_v3')) {
+                    try {
+                        const data = JSON.parse(localStorage.getItem(key));
+                        if (data.nickname && data.nickname.trim().length > 0) {
+                            allPlayers.push({
+                                nickname: data.nickname,
+                                gifts: data.gifts || 0,
+                                clicks: data.totalClicks || 0,
+                                visa: data.visa || 0,
+                                level: data.level || 1
+                            });
+                        }
+                    } catch(e) {
+                        console.error('Ошибка чтения данных игрока:', e);
+                    }
+                }
+            }
+            
+            // Добавляем текущего игрока
+            if (gameState.nickname && !allPlayers.find(p => p.nickname === gameState.nickname)) {
+                allPlayers.push({
+                    nickname: gameState.nickname,
+                    gifts: gameState.gifts,
+                    clicks: gameState.totalClicks,
+                    visa: gameState.visa,
+                    level: gameState.level
+                });
+            }
+            
+            // Топ по подаркам
+            const topGifts = [...allPlayers].sort((a,b) => b.gifts - a.gifts).slice(0,10);
+            
+            // Топ по кликам
+            const topClicks = [...allPlayers].sort((a,b) => b.clicks - a.clicks).slice(0,10);
+            
+            // Топ по VISA
+            const topVisa = [...allPlayers].sort((a,b) => b.visa - a.visa).slice(0,10);
             
             content.innerHTML = `
                 <h3>🏆 Топ по подаркам</h3>
-                ${topGifts.slice(0,5).map((item, i) => `
+                ${topGifts.length > 0 ? topGifts.map((item, i) => `
                     <div class="top-item">
                         <div>
                             <span class="top-rank ${i===0?'':i===1?'silver':i===2?'bronze':''}">
                                 ${i+1}
                             </span>
-                            ${item.name}
+                            ${item.nickname}
                         </div>
-                        <div>${item.value} 🎁</div>
+                        <div>${item.gifts} 🎁</div>
                     </div>
-                `).join('')}
+                `).join('') : '<p style="text-align:center;color:#888;">Пока нет данных</p>'}
                 
                 <h3 style="margin-top:20px;">⚡ Топ по кликам</h3>
-                ${topClicks.slice(0,5).map((item, i) => `
+                ${topClicks.length > 0 ? topClicks.map((item, i) => `
                     <div class="top-item">
                         <div>
                             <span class="top-rank ${i===0?'':i===1?'silver':i===2?'bronze':''}">
                                 ${i+1}
                             </span>
-                            ${item.name}
+                            ${item.nickname}
                         </div>
-                        <div>${item.value.toLocaleString()} 👆</div>
+                        <div>${item.clicks.toLocaleString()} 👆</div>
                     </div>
-                `).join('')}
+                `).join('') : '<p style="text-align:center;color:#888;">Пока нет данных</p>'}
+                
+                <h3 style="margin-top:20px;">💰 Топ по VISA</h3>
+                ${topVisa.length > 0 ? topVisa.map((item, i) => `
+                    <div class="top-item">
+                        <div>
+                            <span class="top-rank ${i===0?'':i===1?'silver':i===2?'bronze':''}">
+                                ${i+1}
+                            </span>
+                            ${item.nickname}
+                        </div>
+                        <div>${item.visa.toLocaleString()} 💳</div>
+                    </div>
+                `).join('') : '<p style="text-align:center;color:#888;">Пока нет данных</p>'}
                 
                 <div class="coming-soon">
-                    <p>Топ обновляется каждый час</p>
-                    <p>Ваше место: #${Math.floor(Math.random()*20)+6}</p>
+                    <p>Обновляется в реальном времени</p>
+                    <p>Всего игроков в базе: ${allPlayers.length}</p>
                 </div>
             `;
             
             modal.style.display = 'flex';
         }
 
-        // РЕФЕРАЛЬНАЯ СИСТЕМА
+        // РЕФЕРАЛЬНАЯ СИСТЕМА (ИСПРАВЛЕННАЯ)
         function openRef() {
             const modal = document.getElementById('ref-modal');
             const content = document.getElementById('ref-content');
             
             const refLink = `https://t.me/visaclickerbot?start=${gameState.refCode}`;
-            const shareText = `🎮 Привет! Присоединяйся к VisaClicker - самой крутой кликер игре в Telegram! Зарабатывай VISA, собирай подарки и становись лучшим! Переходи по ссылке: ${refLink}`;
+            const shortLink = refLink.length > 50 ? refLink.substring(0, 50) + "..." : refLink;
             
             content.innerHTML = `
                 <div class="ref-code">
                     <h3>Ваш реферальный код:</h3>
-                    <div style="font-size:24px;font-weight:bold;margin:10px 0;color:#00ffaa">
+                    <div style="font-size:20px;font-weight:bold;margin:10px 0;color:#00ffaa;word-break:break-all;">
                         ${gameState.refCode}
                     </div>
                     <p>Дайте этот код друзьям при запуске бота</p>
+                    
+                    <div class="ref-link" title="${refLink}">
+                        ${shortLink}
+                    </div>
+                    
                     <button class="copy-btn" onclick="copyRefCode('${gameState.refCode}')">
-                        Скопировать код
+                        📋 Скопировать код
                     </button>
                 </div>
                 
@@ -1010,17 +1238,34 @@
 
         // КОПИРОВАНИЕ РЕФ.КОДА
         function copyRefCode(code) {
-            navigator.clipboard.writeText(code);
-            showNotification('✅ Код скопирован!', 'success');
+            navigator.clipboard.writeText(code)
+                .then(() => showNotification('✅ Код скопирован в буфер!', 'success'))
+                .catch(() => {
+                    const textArea = document.createElement('textarea');
+                    textArea.value = code;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    showNotification('✅ Код скопирован!', 'success');
+                });
         }
 
         // ПОДЕЛИТЬСЯ ССЫЛКОЙ
         function shareRefLink() {
             const refLink = `https://t.me/visaclickerbot?start=${gameState.refCode}`;
+            const shareText = `🎮 Присоединяйся к VisaClicker - крутая кликер игра! Зарабатывай VISA, собирай подарки! Используй мой код: ${gameState.refCode}`;
+            
             if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
-                Telegram.WebApp.openLink(`https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent('Присоединяйся к VisaClicker!')}`);
+                Telegram.WebApp.openLink(`https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent(shareText)}`);
+            } else if (navigator.share) {
+                navigator.share({
+                    title: 'VisaClicker',
+                    text: shareText,
+                    url: refLink
+                });
             } else {
-                navigator.clipboard.writeText(refLink);
+                navigator.clipboard.writeText(`${shareText}\n${refLink}`);
                 showNotification('✅ Ссылка скопирована в буфер!', 'success');
             }
         }
@@ -1055,11 +1300,17 @@
         // ОТПРАВКА ДАННЫХ В БОТА
         function sendToBot(action, data) {
             if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
-                Telegram.WebApp.sendData(JSON.stringify({
-                    action: action,
-                    userId: getUserId(),
-                    ...data
-                }));
+                try {
+                    Telegram.WebApp.sendData(JSON.stringify({
+                        action: action,
+                        userId: gameState.userId,
+                        timestamp: Date.now(),
+                        ...data
+                    }));
+                    console.log(`Отправлено в бота: ${action}`, data);
+                } catch(e) {
+                    console.error('Ошибка отправки в бота:', e);
+                }
             }
         }
 
