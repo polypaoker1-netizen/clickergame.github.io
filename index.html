@@ -1,186 +1,663 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <title>Visaclicker</title>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VisaClicker Game</title>
+    <link rel="stylesheet" href="https://telegram.org/js/telegram-web-app.js">
     <style>
-        body {
+        * {
             margin: 0;
-            padding: 20px;
-            background: #1a1a2e;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
             color: white;
-            font-family: Arial;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #00ff88;
+            font-size: 28px;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+            margin-bottom: 10px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 15px;
+        }
+
+        .stat {
             text-align: center;
         }
-        
-        .game-box {
-            max-width: 400px;
-            margin: 0 auto;
-            background: #16213e;
-            padding: 20px;
-            border-radius: 15px;
-            border: 3px solid #0f3460;
+
+        .stat-label {
+            font-size: 12px;
+            color: #aaa;
+            margin-bottom: 5px;
         }
-        
-        h1 {
-            color: #e94560;
-            margin-bottom: 30px;
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ff88;
         }
-        
-        .stats {
+
+        .game-area {
+            position: relative;
+            height: 250px;
+            margin-bottom: 20px;
             display: flex;
-            justify-content: space-between;
-            font-size: 20px;
-            margin-bottom: 30px;
-            background: #0f3460;
-            padding: 15px;
-            border-radius: 10px;
+            justify-content: center;
+            align-items: center;
         }
-        
-        .click-area {
-            width: 200px;
-            height: 200px;
-            background: #e94560;
+
+        .click-target {
+            width: 180px;
+            height: 180px;
+            background: linear-gradient(135deg, #ff0080, #ff8c00);
             border-radius: 50%;
-            margin: 20px auto;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 22px;
             font-weight: bold;
-            transition: transform 0.1s;
+            transition: all 0.1s;
+            border: 5px solid white;
+            box-shadow: 0 0 30px rgba(255, 0, 128, 0.4);
+            user-select: none;
         }
-        
-        .click-area:active {
+
+        .click-target:active {
             transform: scale(0.9);
+            box-shadow: 0 0 50px rgba(255, 0, 128, 0.6);
         }
-        
-        .buttons {
-            margin-top: 30px;
+
+        .bonuses {
             display: flex;
-            gap: 10px;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
         }
-        
-        button {
-            flex: 1;
+
+        .bonus-item {
+            text-align: center;
+        }
+
+        .bonus-value {
+            color: #00d9ff;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .btn {
             padding: 15px;
             border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-exit {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #ff416c, #ff4b2b);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+
+        .btn-exit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 65, 108, 0.4);
+        }
+
+        .gift {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #ffd700, #ffa500);
+            border-radius: 50%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
+            cursor: pointer;
+            z-index: 100;
+            animation: float 3s infinite ease-in-out;
+            box-shadow: 0 0 20px gold;
+            border: 3px solid white;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(20deg); }
+        }
+
+        .gift:hover {
+            transform: scale(1.2) rotate(10deg);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 255, 136, 0.9);
+            color: black;
+            padding: 15px 25px;
             border-radius: 10px;
-            background: #0f3460;
+            font-weight: bold;
+            z-index: 1000;
+            display: none;
+            animation: slideDown 0.5s ease;
+        }
+
+        @keyframes slideDown {
+            from { top: -100px; }
+            to { top: 20px; }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #1a1a2e;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 90%;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+
+        .close-modal {
+            float: right;
+            cursor: pointer;
+            font-size: 24px;
+            color: #ff416c;
+        }
+
+        .upgrade-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .upgrade-btn {
+            background: linear-gradient(135deg, #00ff88, #00cc6a);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
             color: white;
             font-weight: bold;
             cursor: pointer;
         }
-        
-        .gift {
-            position: fixed;
-            width: 60px;
-            height: 60px;
-            background: gold;
-            border-radius: 50%;
-            display: none;
-            font-size: 40px;
-            cursor: pointer;
-            z-index: 100;
+
+        .upgrade-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
         }
     </style>
 </head>
 <body>
-    <div class="game-box">
-        <h1>🎮 VISA CLICKER</h1>
-        
+    <div class="container">
+        <div class="header">
+            <h1>🎮 VISA CLICKER</h1>
+        </div>
+
         <div class="stats">
-            <div>VISA: <span id="visa">100</span></div>
-            <div>Уровень: <span id="level">1</span></div>
+            <div class="stat">
+                <div class="stat-label">VISA</div>
+                <div class="stat-value" id="visa">100</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">УРОВЕНЬ</div>
+                <div class="stat-value" id="level">1</div>
+            </div>
         </div>
-        
-        <div class="click-area" onclick="clickMe()">
-            КЛИКАЙ!
+
+        <div class="game-area">
+            <div class="click-target" id="click-target" onclick="handleClick()">
+                КЛИКАЙ!
+            </div>
+            <div class="gift" id="gift" onclick="collectGift()">🎁</div>
         </div>
-        
-        <div>Сила клика: <span id="power">x5</span></div>
-        <div>Автокликеров: <span id="auto">0</span></div>
-        
+
+        <div class="bonuses">
+            <div class="bonus-item">
+                <div>Сила клика</div>
+                <div class="bonus-value" id="power">x5</div>
+            </div>
+            <div class="bonus-item">
+                <div>Автокликеров</div>
+                <div class="bonus-value" id="auto">0</div>
+            </div>
+            <div class="bonus-item">
+                <div>Подарков</div>
+                <div class="bonus-value" id="gift-count">0</div>
+            </div>
+        </div>
+
         <div class="buttons">
-            <button onclick="openMenu()">Меню</button>
-            <button onclick="openInventory()">Инвентарь</button>
-            <button onclick="exitGame()">Выход</button>
+            <button class="btn" onclick="openUpgrades()">УЛУЧШЕНИЯ</button>
+            <button class="btn" onclick="openInventory()">ИНВЕНТАРЬ</button>
+            <button class="btn" onclick="openShop()">МАГАЗИН</button>
+        </div>
+
+        <button class="btn-exit" onclick="exitGame()">ВЫХОД</button>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <!-- Модальное окно улучшений -->
+    <div class="modal" id="upgrades-modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('upgrades-modal')">×</span>
+            <h2>🛠️ УЛУЧШЕНИЯ</h2>
+            <div id="upgrades-list">
+                <!-- Улучшения будут здесь -->
+            </div>
         </div>
     </div>
-    
-    <div class="gift" id="gift" onclick="takeGift()">🎁</div>
-    
+
+    <!-- Модальное окно инвентаря -->
+    <div class="modal" id="inventory-modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('inventory-modal')">×</span>
+            <h2>🎒 ИНВЕНТАРЬ</h2>
+            <div id="inventory-items">
+                <!-- Инвентарь будет здесь -->
+            </div>
+        </div>
+    </div>
+
     <script>
-        let visa = 100;
-        let level = 1;
-        let power = 5;
-        let auto = 0;
-        let gifts = 0;
-        
-        function clickMe() {
-            visa += power;
-            level++;
-            
-            document.getElementById('visa').innerText = visa;
-            document.getElementById('level').innerText = level;
-            
-            // Шанс подарка 3%
-            if (Math.random() < 0.03) {
-                showGift();
+        // ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
+        let gameState = {
+            visa: 100,
+            level: 1,
+            clickPower: 5,
+            autoClickers: 0,
+            gifts: 0,
+            giftChance: 0.05, // 5% начальный шанс
+            upgrades: {
+                power: 0,
+                auto: 0
+            }
+        };
+
+        // ЗАГРУЗКА СОХРАНЕНИЙ
+        function loadGame() {
+            const saved = localStorage.getItem('visaclicker_save');
+            if (saved) {
+                gameState = JSON.parse(saved);
+                updateDisplay();
             }
         }
-        
+
+        // СОХРАНЕНИЕ ИГРЫ
+        function saveGame() {
+            localStorage.setItem('visaclicker_save', JSON.stringify(gameState));
+        }
+
+        // ОБНОВЛЕНИЕ ИНТЕРФЕЙСА
+        function updateDisplay() {
+            document.getElementById('visa').textContent = gameState.visa;
+            document.getElementById('level').textContent = gameState.level;
+            document.getElementById('power').textContent = `x${gameState.clickPower}`;
+            document.getElementById('auto').textContent = gameState.autoClickers;
+            document.getElementById('gift-count').textContent = gameState.gifts;
+        }
+
+        // КЛИК ПО ФИГУРЕ
+        function handleClick() {
+            // Добавляем VISA
+            gameState.visa += gameState.clickPower;
+            gameState.level += 1;
+            
+            // Анимация
+            const target = document.getElementById('click-target');
+            target.style.transform = 'scale(0.9)';
+            setTimeout(() => target.style.transform = 'scale(1)', 100);
+            
+            // Проверка на подарок
+            if (Math.random() < gameState.giftChance) {
+                showGift();
+            }
+            
+            // Обновляем и сохраняем
+            updateDisplay();
+            saveGame();
+            
+            // Уведомление в боте (если в Telegram)
+            if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
+                const data = {
+                    action: 'click',
+                    visa: gameState.visa,
+                    level: gameState.level,
+                    power: gameState.clickPower
+                };
+                Telegram.WebApp.sendData(JSON.stringify(data));
+            }
+        }
+
+        // ПОКАЗ ПОДАРКА
         function showGift() {
             const gift = document.getElementById('gift');
             gift.style.display = 'flex';
-            gift.style.alignItems = 'center';
-            gift.style.justifyContent = 'center';
-            gift.style.left = Math.random() * 80 + 10 + '%';
-            gift.style.top = Math.random() * 80 + 10 + '%';
+            gift.style.left = Math.random() * 70 + 15 + '%';
+            gift.style.top = Math.random() * 70 + 15 + '%';
             
+            // Автоскрытие через 5 секунд
             setTimeout(() => {
-                gift.style.display = 'none';
+                if (gift.style.display !== 'none') {
+                    gift.style.display = 'none';
+                    showNotification('⏰ Подарок исчез!', 'warning');
+                }
+            }, 5000);
+        }
+
+        // СОБРАТЬ ПОДАРОК
+        function collectGift() {
+            gameState.gifts += 1;
+            gameState.giftChance = Math.max(0.01, gameState.giftChance * 0.9); // Уменьшаем шанс на 10%
+            
+            const gift = document.getElementById('gift');
+            gift.style.display = 'none';
+            
+            // Сохраняем
+            saveGame();
+            updateDisplay();
+            
+            // Уведомление
+            showNotification(`🎁 Подарок получен! Всего: ${gameState.gifts}`, 'success');
+            
+            // Отправляем в бот
+            if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
+                const data = {
+                    action: 'gift_collected',
+                    gifts: gameState.gifts,
+                    totalGifts: gameState.gifts,
+                    chance: gameState.giftChance
+                };
+                Telegram.WebApp.sendData(JSON.stringify(data));
+            }
+        }
+
+        // УВЕДОМЛЕНИЯ
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.display = 'block';
+            
+            // Цвета по типу
+            if (type === 'success') {
+                notification.style.background = 'rgba(0, 255, 136, 0.9)';
+                notification.style.color = 'black';
+            } else if (type === 'warning') {
+                notification.style.background = 'rgba(255, 193, 7, 0.9)';
+                notification.style.color = 'black';
+            }
+            
+            // Автоскрытие
+            setTimeout(() => {
+                notification.style.display = 'none';
             }, 3000);
         }
-        
-        function takeGift() {
-            gifts++;
-            document.getElementById('gift').style.display = 'none';
-            alert(`🎁 Подарок получен! Всего: ${gifts}`);
+
+        // УЛУЧШЕНИЯ
+        function openUpgrades() {
+            const modal = document.getElementById('upgrades-modal');
+            const list = document.getElementById('upgrades-list');
+            
+            list.innerHTML = `
+                <div class="upgrade-item">
+                    <div>
+                        <h3>Усилитель клика</h3>
+                        <p>+5 к силе клика</p>
+                        <small>Текущая сила: x${gameState.clickPower}</small>
+                    </div>
+                    <button class="upgrade-btn" onclick="buyUpgrade('power')" 
+                            ${gameState.visa >= 500 ? '' : 'disabled'}>
+                        500 VISA
+                    </button>
+                </div>
+                
+                <div class="upgrade-item">
+                    <div>
+                        <h3>Автокликер</h3>
+                        <p>Кликает автоматически каждую секунду</p>
+                        <small>Текущее кол-во: ${gameState.autoClickers}</small>
+                    </div>
+                    <button class="upgrade-btn" onclick="buyUpgrade('auto')" 
+                            ${gameState.visa >= 1000 ? '' : 'disabled'}>
+                        1000 VISA
+                    </button>
+                </div>
+                
+                <div class="upgrade-item">
+                    <div>
+                        <h3>Увеличитель удачи</h3>
+                        <p>+2% к шансу подарка</p>
+                        <small>Текущий шанс: ${(gameState.giftChance*100).toFixed(1)}%</small>
+                    </div>
+                    <button class="upgrade-btn" onclick="buyUpgrade('luck')" 
+                            ${gameState.visa >= 2000 ? '' : 'disabled'}>
+                        2000 VISA
+                    </button>
+                </div>
+            `;
+            
+            modal.style.display = 'flex';
         }
-        
-        function openMenu() {
-            alert('Меню улучшений\n\nКупить усилитель: 500 VISA\nКупить автокликер: 1000 VISA');
+
+        // ПОКУПКА УЛУЧШЕНИЯ
+        function buyUpgrade(type) {
+            let cost = 0;
+            let success = false;
+            
+            switch(type) {
+                case 'power':
+                    cost = 500;
+                    if (gameState.visa >= cost) {
+                        gameState.visa -= cost;
+                        gameState.clickPower += 5;
+                        gameState.upgrades.power += 1;
+                        success = true;
+                        showNotification('✅ Сила клика увеличена!', 'success');
+                    }
+                    break;
+                    
+                case 'auto':
+                    cost = 1000;
+                    if (gameState.visa >= cost) {
+                        gameState.visa -= cost;
+                        gameState.autoClickers += 1;
+                        gameState.upgrades.auto += 1;
+                        success = true;
+                        showNotification('✅ Автокликер куплен!', 'success');
+                    }
+                    break;
+                    
+                case 'luck':
+                    cost = 2000;
+                    if (gameState.visa >= cost) {
+                        gameState.visa -= cost;
+                        gameState.giftChance += 0.02;
+                        success = true;
+                        showNotification('✅ Шанс подарка увеличен!', 'success');
+                    }
+                    break;
+            }
+            
+            if (success) {
+                updateDisplay();
+                saveGame();
+                closeModal('upgrades-modal');
+            } else {
+                showNotification('❌ Недостаточно VISA!', 'warning');
+            }
         }
-        
+
+        // ИНВЕНТАРЬ
         function openInventory() {
-            alert(`🎒 Инвентарь:\n\nПодарки: ${gifts}\nЗвёзды: 0\nNFT: 0`);
+            const modal = document.getElementById('inventory-modal');
+            const list = document.getElementById('inventory-items');
+            
+            list.innerHTML = `
+                <div class="upgrade-item">
+                    <h3>📊 Статистика</h3>
+                    <p>Всего кликов: ${(gameState.level - 1).toLocaleString()}</p>
+                    <p>Заработано VISA: ${gameState.visa.toLocaleString()}</p>
+                </div>
+                
+                <div class="upgrade-item">
+                    <h3>🎁 Подарки</h3>
+                    <p>Всего собрано: ${gameState.gifts}</p>
+                    <p>Текущий шанс: ${(gameState.giftChance*100).toFixed(1)}%</p>
+                </div>
+                
+                <div class="upgrade-item">
+                    <h3>⚡ Улучшения</h3>
+                    <p>Усилителей клика: ${gameState.upgrades.power}</p>
+                    <p>Автокликеров: ${gameState.upgrades.auto}</p>
+                </div>
+            `;
+            
+            modal.style.display = 'flex';
         }
-        
+
+        // МАГАЗИН (заглушка)
+        function openShop() {
+            showNotification('🛒 Магазин скоро откроется!', 'info');
+        }
+
+        // ЗАКРЫТЬ МОДАЛЬНОЕ ОКНО
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // ВЫХОД ИЗ ИГРЫ
         function exitGame() {
             if (confirm('Выйти из игры?')) {
-                if (window.Telegram && Telegram.WebApp) {
+                if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
                     Telegram.WebApp.close();
                 } else {
-                    alert('Игра закрыта');
+                    showNotification('Игра закрыта', 'info');
+                    setTimeout(() => {
+                        // Для браузера - редирект
+                        window.location.href = 'about:blank';
+                    }, 1000);
                 }
             }
         }
-        
-        // Автокликеры
+
+        // АВТОКЛИКЕРЫ
         setInterval(() => {
-            if (auto > 0) {
-                visa += auto * power;
-                document.getElementById('visa').innerText = visa;
+            if (gameState.autoClickers > 0) {
+                gameState.visa += gameState.autoClickers * gameState.clickPower;
+                updateDisplay();
+                saveGame();
             }
         }, 1000);
-        
-        // Интеграция с Telegram
-        if (typeof Telegram !== 'undefined') {
-            Telegram.WebApp.ready();
-            Telegram.WebApp.expand();
-        }
+
+        // АВТОСМЕНА ФИГУР
+        setInterval(() => {
+            const target = document.getElementById('click-target');
+            const colors = [
+                'linear-gradient(135deg, #ff0080, #ff8c00)',
+                'linear-gradient(135deg, #00b4db, #0083b0)',
+                'linear-gradient(135deg, #56ab2f, #a8e063)',
+                'linear-gradient(135deg, #da22ff, #9733ee)'
+            ];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            target.style.background = randomColor;
+        }, 2000);
+
+        // ИНИЦИАЛИЗАЦИЯ
+        document.addEventListener('DOMContentLoaded', () => {
+            loadGame();
+            
+            // Интеграция с Telegram
+            if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
+                Telegram.WebApp.ready();
+                Telegram.WebApp.expand();
+                Telegram.WebApp.setHeaderColor('#0f0c29');
+                Telegram.WebApp.setBackgroundColor('#0f0c29');
+            }
+            
+            // Сохранение при закрытии
+            window.addEventListener('beforeunload', saveGame);
+        });
     </script>
 </body>
 </html>
