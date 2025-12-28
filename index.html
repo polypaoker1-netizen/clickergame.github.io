@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Visaclicker</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1a2e;
+            color: white;
+            font-family: Arial;
+            text-align: center;
+        }
+        
+        .game-box {
+            max-width: 400px;
+            margin: 0 auto;
+            background: #16213e;
+            padding: 20px;
+            border-radius: 15px;
+            border: 3px solid #0f3460;
+        }
+        
+        h1 {
+            color: #e94560;
+            margin-bottom: 30px;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 20px;
+            margin-bottom: 30px;
+            background: #0f3460;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .click-area {
+            width: 200px;
+            height: 200px;
+            background: #e94560;
+            border-radius: 50%;
+            margin: 20px auto;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            transition: transform 0.1s;
+        }
+        
+        .click-area:active {
+            transform: scale(0.9);
+        }
+        
+        .buttons {
+            margin-top: 30px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            background: #0f3460;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .gift {
+            position: fixed;
+            width: 60px;
+            height: 60px;
+            background: gold;
+            border-radius: 50%;
+            display: none;
+            font-size: 40px;
+            cursor: pointer;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-box">
+        <h1>🎮 VISA CLICKER</h1>
+        
+        <div class="stats">
+            <div>VISA: <span id="visa">100</span></div>
+            <div>Уровень: <span id="level">1</span></div>
+        </div>
+        
+        <div class="click-area" onclick="clickMe()">
+            КЛИКАЙ!
+        </div>
+        
+        <div>Сила клика: <span id="power">x5</span></div>
+        <div>Автокликеров: <span id="auto">0</span></div>
+        
+        <div class="buttons">
+            <button onclick="openMenu()">Меню</button>
+            <button onclick="openInventory()">Инвентарь</button>
+            <button onclick="exitGame()">Выход</button>
+        </div>
+    </div>
+    
+    <div class="gift" id="gift" onclick="takeGift()">🎁</div>
+    
+    <script>
+        let visa = 100;
+        let level = 1;
+        let power = 5;
+        let auto = 0;
+        let gifts = 0;
+        
+        function clickMe() {
+            visa += power;
+            level++;
+            
+            document.getElementById('visa').innerText = visa;
+            document.getElementById('level').innerText = level;
+            
+            // Шанс подарка 3%
+            if (Math.random() < 0.03) {
+                showGift();
+            }
+        }
+        
+        function showGift() {
+            const gift = document.getElementById('gift');
+            gift.style.display = 'flex';
+            gift.style.alignItems = 'center';
+            gift.style.justifyContent = 'center';
+            gift.style.left = Math.random() * 80 + 10 + '%';
+            gift.style.top = Math.random() * 80 + 10 + '%';
+            
+            setTimeout(() => {
+                gift.style.display = 'none';
+            }, 3000);
+        }
+        
+        function takeGift() {
+            gifts++;
+            document.getElementById('gift').style.display = 'none';
+            alert(`🎁 Подарок получен! Всего: ${gifts}`);
+        }
+        
+        function openMenu() {
+            alert('Меню улучшений\n\nКупить усилитель: 500 VISA\nКупить автокликер: 1000 VISA');
+        }
+        
+        function openInventory() {
+            alert(`🎒 Инвентарь:\n\nПодарки: ${gifts}\nЗвёзды: 0\nNFT: 0`);
+        }
+        
+        function exitGame() {
+            if (confirm('Выйти из игры?')) {
+                if (window.Telegram && Telegram.WebApp) {
+                    Telegram.WebApp.close();
+                } else {
+                    alert('Игра закрыта');
+                }
+            }
+        }
+        
+        // Автокликеры
+        setInterval(() => {
+            if (auto > 0) {
+                visa += auto * power;
+                document.getElementById('visa').innerText = visa;
+            }
+        }, 1000);
+        
+        // Интеграция с Telegram
+        if (typeof Telegram !== 'undefined') {
+            Telegram.WebApp.ready();
+            Telegram.WebApp.expand();
+        }
+    </script>
+</body>
+</html>
