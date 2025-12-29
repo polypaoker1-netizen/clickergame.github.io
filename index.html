@@ -4,19 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VISA CLICKER</title>
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: Arial, sans-serif;
         }
         
         body {
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            background: linear-gradient(135deg, #0f0c29, #302b63);
             color: white;
             min-height: 100vh;
             padding: 20px;
@@ -34,7 +31,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.95);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -42,19 +39,18 @@
         }
         
         .modal-content {
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            background: #1a1a2e;
             padding: 30px;
-            border-radius: 20px;
+            border-radius: 15px;
             width: 90%;
             max-width: 400px;
             text-align: center;
-            border: 3px solid #e94560;
+            border: 2px solid #e94560;
         }
         
         .modal-content h2 {
             color: #e94560;
             margin-bottom: 20px;
-            font-size: 28px;
         }
         
         .modal-input {
@@ -62,28 +58,27 @@
             padding: 15px;
             margin: 15px 0;
             border: 2px solid #0f3460;
-            border-radius: 15px;
+            border-radius: 10px;
             background: rgba(255,255,255,0.1);
             color: white;
-            font-size: 16px;
+            font-size: 18px;
         }
         
         .modal-btn {
             width: 100%;
             padding: 15px;
-            background: linear-gradient(90deg, #e94560, #ff6b6b);
+            background: #e94560;
             border: none;
-            border-radius: 15px;
+            border-radius: 10px;
             color: white;
             font-size: 18px;
             font-weight: bold;
             cursor: pointer;
             margin-top: 10px;
-            transition: transform 0.3s;
         }
         
         .modal-btn:hover {
-            transform: translateY(-3px);
+            background: #ff6b6b;
         }
         
         .error {
@@ -93,7 +88,11 @@
         }
         
         /* Игра */
-        #gameInterface {
+        .screen {
+            display: none;
+        }
+        
+        #clickerScreen {
             display: none;
         }
         
@@ -104,7 +103,7 @@
             align-items: center;
             background: rgba(255,255,255,0.1);
             padding: 15px;
-            border-radius: 15px;
+            border-radius: 10px;
             margin-bottom: 15px;
         }
         
@@ -115,28 +114,6 @@
         }
         
         .user-info {
-            font-size: 16px;
-        }
-        
-        /* Бусты */
-        .boosts {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
-        }
-        
-        .boost-item {
-            background: rgba(255,255,255,0.1);
-            padding: 10px 15px;
-            border-radius: 10px;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        
-        .boost-icon {
             font-size: 16px;
         }
         
@@ -168,20 +145,11 @@
         }
         
         /* Прогресс бары */
-        .progress-container {
-            margin: 15px 0;
-        }
-        
-        .progress-label {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-        }
-        
         .progress-bar {
             height: 15px;
             background: rgba(255,255,255,0.1);
             border-radius: 10px;
+            margin: 15px 0;
             overflow: hidden;
         }
         
@@ -218,7 +186,6 @@
         
         .click-area:active {
             transform: scale(0.95);
-            box-shadow: 0 0 60px rgba(233,69,96,0.8);
         }
         
         .click-info {
@@ -229,14 +196,14 @@
         .upgrades {
             background: rgba(255,255,255,0.1);
             padding: 15px;
-            border-radius: 15px;
+            border-radius: 10px;
             margin: 15px 0;
         }
         
         .upgrade-item {
             background: rgba(255,255,255,0.1);
             padding: 12px;
-            border-radius: 10px;
+            border-radius: 8px;
             margin: 8px 0;
             display: flex;
             justify-content: space-between;
@@ -244,7 +211,7 @@
         }
         
         .upgrade-btn {
-            background: linear-gradient(90deg, #ffa500, #ff6b6b);
+            background: #e94560;
             border: none;
             padding: 8px 15px;
             border-radius: 20px;
@@ -258,35 +225,36 @@
             cursor: not-allowed;
         }
         
-        /* Меню */
-        .menu {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            margin: 15px 0;
+        /* Нижнее меню */
+        .bottom-menu {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
         }
         
         .menu-btn {
-            padding: 12px 5px;
-            background: rgba(255,255,255,0.1);
+            padding: 12px 25px;
+            background: rgba(255,255,255,0.2);
             border: none;
-            border-radius: 10px;
+            border-radius: 15px;
             color: white;
             font-weight: bold;
             cursor: pointer;
-            font-size: 13px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
-        }
-        
-        .menu-btn i {
             font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
-        .menu-btn:hover {
-            background: rgba(255,255,255,0.2);
+        .menu-btn.active {
+            background: #e94560;
         }
         
         /* Секции */
@@ -294,8 +262,12 @@
             background: rgba(255,255,255,0.1);
             padding: 20px;
             border-radius: 15px;
-            margin: 15px 0;
+            margin: 15px 0 80px 0;
             display: none;
+        }
+        
+        #missionsSection {
+            display: block;
         }
         
         /* Подарок */
@@ -312,12 +284,12 @@
             cursor: pointer;
             z-index: 100;
             box-shadow: 0 0 30px gold;
-            animation: float 2s ease-in-out infinite;
+            animation: float 2s infinite;
         }
         
         @keyframes float {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-15px) rotate(180deg); }
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
         }
         
         /* Уведомление */
@@ -340,6 +312,64 @@
             to { transform: translateX(0); }
         }
         
+        /* Миссии */
+        .mission-item {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        
+        .mission-progress {
+            height: 8px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        .mission-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00ccff);
+            border-radius: 4px;
+        }
+        
+        /* Колесо */
+        .wheel-container {
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .wheel {
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background: conic-gradient(
+                #ff6b6b, #ffa500, #ffd700, #00ff88,
+                #00ccff, #9d4edd, #ff6b6b
+            );
+            margin: 0 auto 30px;
+            position: relative;
+            animation: spin 10s linear infinite paused;
+        }
+        
+        .wheel.spinning {
+            animation-play-state: running;
+        }
+        
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+        
+        .wheel-pointer {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 30px;
+            color: #ffd700;
+        }
+        
         /* Топ игроков */
         .top-player {
             background: rgba(255,255,255,0.1);
@@ -353,12 +383,11 @@
         
         .player-rank {
             font-size: 20px;
-            width: 30px;
+            width: 40px;
         }
         
         .player-info {
             flex: 1;
-            margin-left: 10px;
         }
         
         .player-stats {
@@ -366,32 +395,20 @@
             font-weight: bold;
         }
         
-        /* Миссии */
-        .mission-item {
+        /* Бусты */
+        .boost-item {
             background: rgba(255,255,255,0.1);
-            padding: 12px;
-            border-radius: 10px;
-            margin: 8px 0;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         
-        .mission-progress {
-            height: 6px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 3px;
-            margin-top: 5px;
-            overflow: hidden;
-        }
-        
-        .mission-progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #00ff88, #00ccff);
-            border-radius: 3px;
-        }
-        
-        /* Адаптивность */
-        @media (max-width: 480px) {
-            .menu { grid-template-columns: repeat(3, 1fr); }
-            .click-area { width: 170px; height: 170px; }
+        .boost-timer {
+            margin-left: auto;
+            color: #ffd700;
         }
     </style>
 </head>
@@ -423,230 +440,243 @@
         <div class="header">
             <div class="logo">VISA CLICKER</div>
             <div class="user-info">
-                👤 <span id="displayUsername">Игрок</span>
-            </div>
-        </div>
-        
-        <!-- Бусты -->
-        <div class="boosts" id="boostsContainer"></div>
-        
-        <!-- Статистика -->
-        <div class="stats">
-            <div class="stat-card">
-                <div class="stat-label">VISA</div>
-                <div class="stat-value" id="visaCount">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">УРОВЕНЬ</div>
-                <div class="stat-value" id="levelCount">1</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">КЛИКОВ</div>
-                <div class="stat-value" id="clicksCount">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">ПОДАРКОВ</div>
-                <div class="stat-value" id="giftsCount">0</div>
-            </div>
-        </div>
-        
-        <!-- Прогресс -->
-        <div class="progress-container">
-            <div class="progress-label">
-                <span>Уровень:</span>
-                <span id="xpText">0/100</span>
-            </div>
-            <div class="progress-bar">
-                <div class="progress-fill xp-bar" id="xpBar" style="width: 0%"></div>
-            </div>
-            
-            <div class="progress-label" style="margin-top: 15px;">
-                <span>⚡ Энергия:</span>
-                <span id="energyText">50/50</span>
-            </div>
-            <div class="progress-bar">
-                <div class="progress-fill energy-bar" id="energyBar" style="width: 100%"></div>
+                <span id="displayUsername">Игрок</span>
             </div>
         </div>
         
         <!-- Кликер -->
-        <div class="clicker">
-            <div class="click-area" onclick="handleClick()" id="clickArea">
-                КЛИКАЙ!
-            </div>
-            <div class="click-info">
-                <div>Сила клика: <span id="powerValue" style="color: #00ff88;">x5</span></div>
-                <div>Шанс подарка: <span id="chanceValue" style="color: gold;">0.5%</span></div>
-                <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;" id="multiplierText"></div>
-            </div>
-        </div>
-        
-        <!-- Улучшения -->
-        <div class="upgrades" id="upgradesSection">
-            <h3>⚡ УЛУЧШЕНИЯ</h3>
-            <div class="upgrade-item">
-                <div>
-                    <div style="font-weight: bold;">💪 Сила клика</div>
-                    <div style="font-size: 12px;">Текущая: x<span id="clickPower">5</span></div>
+        <div id="clickerScreen" class="screen">
+            <!-- Статистика -->
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-label">VISA</div>
+                    <div class="stat-value" id="visaCount">0</div>
                 </div>
-                <button class="upgrade-btn" onclick="buyUpgrade('click')" id="clickBtn">
-                    500 VISA
-                </button>
-            </div>
-            <div class="upgrade-item">
-                <div>
-                    <div style="font-weight: bold;">⚡ Ёмкость энергии</div>
-                    <div style="font-size: 12px;">Макс: <span id="maxEnergy">50</span></div>
+                <div class="stat-card">
+                    <div class="stat-label">УРОВЕНЬ</div>
+                    <div class="stat-value" id="levelCount">1</div>
                 </div>
-                <button class="upgrade-btn" onclick="buyUpgrade('energy')" id="energyBtn">
-                    800 VISA
-                </button>
-            </div>
-            <div class="upgrade-item">
-                <div>
-                    <div style="font-weight: bold;">🎁 Шанс подарка</div>
-                    <div style="font-size: 12px;">Текущий: <span id="giftChanceValue">0.5%</span></div>
+                <div class="stat-card">
+                    <div class="stat-label">КЛИКОВ</div>
+                    <div class="stat-value" id="clicksCount">0</div>
                 </div>
-                <button class="upgrade-btn" onclick="buyUpgrade('chance')" id="chanceBtn">
-                    1200 VISA
-                </button>
+                <div class="stat-card">
+                    <div class="stat-label">ПОДАРКОВ</div>
+                    <div class="stat-value" id="giftsCount">0</div>
+                </div>
+            </div>
+            
+            <!-- Прогресс -->
+            <div>
+                <div style="margin-bottom: 5px;">
+                    <span>Уровень: </span>
+                    <span id="xpText">0/100</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill xp-bar" id="xpBar" style="width: 0%"></div>
+                </div>
+                
+                <div style="margin: 15px 0 5px;">
+                    <span>⚡ Энергия: </span>
+                    <span id="energyText">50/50</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill energy-bar" id="energyBar" style="width: 100%"></div>
+                </div>
+            </div>
+            
+            <!-- Кликер -->
+            <div class="clicker">
+                <div class="click-area" onclick="handleClick()" id="clickArea">
+                    КЛИКАЙ!
+                </div>
+                <div class="click-info">
+                    <div>Сила клика: <span id="powerValue" style="color: #00ff88;">x5</span></div>
+                    <div>Шанс подарка: <span id="chanceValue" style="color: gold;">0.5%</span></div>
+                    <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;" id="multiplierText"></div>
+                </div>
+            </div>
+            
+            <!-- Бусты -->
+            <div id="boostsContainer" style="margin-bottom: 15px;"></div>
+            
+            <!-- Улучшения -->
+            <div class="upgrades">
+                <h3>⚡ УЛУЧШЕНИЯ</h3>
+                <div class="upgrade-item">
+                    <div>
+                        <div style="font-weight: bold;">💪 Сила клика</div>
+                        <div style="font-size: 12px;">Текущая: x<span id="clickPower">5</span></div>
+                    </div>
+                    <button class="upgrade-btn" onclick="buyUpgrade('click')" id="clickBtn">
+                        500 VISA
+                    </button>
+                </div>
+                <div class="upgrade-item">
+                    <div>
+                        <div style="font-weight: bold;">⚡ Энергия</div>
+                        <div style="font-size: 12px;">Макс: <span id="maxEnergy">50</span></div>
+                    </div>
+                    <button class="upgrade-btn" onclick="buyUpgrade('energy')" id="energyBtn">
+                        800 VISA
+                    </button>
+                </div>
+                <div class="upgrade-item">
+                    <div>
+                        <div style="font-weight: bold;">🎁 Шанс подарка</div>
+                        <div style="font-size: 12px;">Текущий: <span id="giftChanceValue">0.5%</span></div>
+                    </div>
+                    <button class="upgrade-btn" onclick="buyUpgrade('chance')" id="chanceBtn">
+                        1200 VISA
+                    </button>
+                </div>
             </div>
         </div>
         
-        <!-- Меню -->
-        <div class="menu">
-            <button class="menu-btn" onclick="showSection('daily')">
-                <i class="fas fa-calendar-day"></i>
-                <span>Ежедневно</span>
-            </button>
-            <button class="menu-btn" onclick="showSection('missions')">
-                <i class="fas fa-tasks"></i>
-                <span>Миссии</span>
-            </button>
-            <button class="menu-btn" onclick="showSection('inventory')">
-                <i class="fas fa-backpack"></i>
-                <span>Инвентарь</span>
-            </button>
-            <button class="menu-btn" onclick="showSection('top')">
-                <i class="fas fa-trophy"></i>
-                <span>Топ</span>
-            </button>
-            <button class="menu-btn" onclick="showSection('referral')">
-                <i class="fas fa-users"></i>
-                <span>Рефералы</span>
-            </button>
-            <button class="menu-btn" onclick="showSection('clan')">
-                <i class="fas fa-users-cog"></i>
-                <span>Кланы</span>
-            </button>
-            <button class="menu-btn" onclick="showSection('shop')">
-                <i class="fas fa-shopping-cart"></i>
-                <span>Магазин</span>
-            </button>
-            <button class="menu-btn" onclick="showSection('wheel')">
-                <i class="fas fa-dharmachakra"></i>
-                <span>Колесо</span>
-            </button>
-        </div>
-        
-        <!-- Секция ежедневного бонуса -->
-        <div class="section" id="dailySection">
-            <h3>📅 ЕЖЕДНЕВНЫЙ БОНУС</h3>
-            <div style="text-align: center; padding: 15px;">
-                <div style="font-size: 48px; margin: 10px 0;">🎁</div>
-                <h4>Дней подряд: <span id="streakDays">0</span></h4>
-                <p id="dailyStatus">Сегодняшний бонус доступен!</p>
-                <button class="modal-btn" onclick="claimDailyBonus()" id="dailyBtn" style="margin-top: 15px;">
-                    🎁 ПОЛУЧИТЬ БОНУС
-                </button>
-            </div>
-        </div>
-        
-        <!-- Секция миссий -->
-        <div class="section" id="missionsSection">
+        <!-- Миссии -->
+        <div id="missionsSection" class="section">
             <h3>🎯 МИССИИ</h3>
-            <div id="missionsList"></div>
-        </div>
-        
-        <!-- Секция топа -->
-        <div class="section" id="topSection">
-            <h3>🏆 ТОП ИГРОКОВ</h3>
-            <div id="topList" style="padding: 10px;">
-                <div style="text-align: center; padding: 20px;">
-                    Загрузка топа...
+            <div id="missionsList">
+                <div class="mission-item">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Сделай 1000 кликов</span>
+                        <span id="missionClicks">0/1000</span>
+                    </div>
+                    <div class="mission-progress">
+                        <div class="mission-progress-fill" id="missionClicksBar" style="width: 0%"></div>
+                    </div>
+                    <button class="upgrade-btn" onclick="claimMission('clicks')" id="missionClicksBtn" disabled style="width: 100%; margin-top: 8px;">
+                        Забрать 500 VISA
+                    </button>
+                </div>
+                
+                <div class="mission-item">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Купи 5 улучшений</span>
+                        <span id="missionUpgrades">0/5</span>
+                    </div>
+                    <div class="mission-progress">
+                        <div class="mission-progress-fill" id="missionUpgradesBar" style="width: 0%"></div>
+                    </div>
+                    <button class="upgrade-btn" onclick="claimMission('upgrades')" id="missionUpgradesBtn" disabled style="width: 100%; margin-top: 8px;">
+                        Забрать 1000 VISA
+                    </button>
+                </div>
+                
+                <div class="mission-item">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Собери 10 подарков</span>
+                        <span id="missionGifts">0/10</span>
+                    </div>
+                    <div class="mission-progress">
+                        <div class="mission-progress-fill" id="missionGiftsBar" style="width: 0%"></div>
+                    </div>
+                    <button class="upgrade-btn" onclick="claimMission('gifts')" id="missionGiftsBtn" disabled style="width: 100%; margin-top: 8px;">
+                        Забрать 2000 VISA
+                    </button>
                 </div>
             </div>
         </div>
         
-        <!-- Секция кланов -->
-        <div class="section" id="clanSection">
-            <h3>⚔️ КЛАНЫ</h3>
-            <div style="text-align: center; padding: 30px;">
-                <div style="font-size: 48px; margin: 15px 0;">🛡️</div>
-                <h4>Система кланов скоро!</h4>
-                <p style="margin: 10px 0; opacity: 0.8;">
-                    Создавай кланы, сражайся за топ и получай награды!
-                </p>
-            </div>
-        </div>
-        
-        <!-- Секция магазина -->
-        <div class="section" id="shopSection">
-            <h3>🏪 МАГАЗИН</h3>
-            <div style="text-align: center; padding: 20px;">
-                <p style="margin: 15px 0; opacity: 0.8;">
-                    Покупка бустов и уникальных предметов скоро будет доступна!
-                </p>
-                <button class="upgrade-btn" onclick="buyBoost('click')" style="margin: 5px;">
-                    🚀 x2 Кликов (30 сек) - 1000 VISA
-                </button>
-                <button class="upgrade-btn" onclick="buyBoost('chance')" style="margin: 5px;">
-                    🎁 x2 Шанса (5 мин) - 2000 VISA
-                </button>
-                <button class="upgrade-btn" onclick="buyBoost('energy')" style="margin: 5px;">
-                    ⚡ Беск. энергия (1 мин) - 5000 VISA
-                </button>
-            </div>
-        </div>
-        
-        <!-- Секция колеса -->
-        <div class="section" id="wheelSection">
-            <h3>🎡 КОЛЕСО ФОРТУНЫ</h3>
-            <div style="text-align: center; padding: 30px;">
-                <div style="font-size: 48px; margin: 15px 0;">🎡</div>
-                <p style="margin: 15px 0; opacity: 0.8;">
-                    Крути колесо за бонусы и уникальные награды!
-                </p>
-                <button class="modal-btn" onclick="spinWheel()">
+        <!-- Колесо -->
+        <div id="wheelSection" class="section">
+            <div class="wheel-container">
+                <h3>🎡 КОЛЕСО ФОРТУНЫ</h3>
+                <div class="wheel" id="wheel">
+                    <div class="wheel-pointer">⬇️</div>
+                </div>
+                <p>Крути колесо за бонусы и уникальные награды!</p>
+                <button class="modal-btn" onclick="spinWheel()" id="wheelBtn">
                     🎡 КРУТИТЬ КОЛЕСО (500 VISA)
                 </button>
             </div>
         </div>
+        
+        <!-- Магазин -->
+        <div id="shopSection" class="section">
+            <h3>🏪 МАГАЗИН БУСТОВ</h3>
+            <div style="text-align: center;">
+                <p style="margin-bottom: 15px;">Покупай временные бусты за VISA:</p>
+                
+                <div class="boost-item">
+                    <div style="font-size: 24px;">⚡</div>
+                    <div>
+                        <div style="font-weight: bold;">x2 Кликов на 30 сек</div>
+                        <div style="font-size: 12px; opacity: 0.8;">Удваивает силу каждого клика</div>
+                    </div>
+                    <button class="upgrade-btn" onclick="buyBoost('click')" style="margin-left: auto;">
+                        1000 VISA
+                    </button>
+                </div>
+                
+                <div class="boost-item">
+                    <div style="font-size: 24px;">🎁</div>
+                    <div>
+                        <div style="font-weight: bold;">x2 Шанса на 5 мин</div>
+                        <div style="font-size: 12px; opacity: 0.8;">Удваивает шанс выпадения подарков</div>
+                    </div>
+                    <button class="upgrade-btn" onclick="buyBoost('chance')" style="margin-left: auto;">
+                        2000 VISA
+                    </button>
+                </div>
+                
+                <div class="boost-item">
+                    <div style="font-size: 24px;">♾️</div>
+                    <div>
+                        <div style="font-weight: bold;">Беск. энергия на 1 мин</div>
+                        <div style="font-size: 12px; opacity: 0.8;">Кликай без ограничений по энергии</div>
+                    </div>
+                    <button class="upgrade-btn" onclick="buyBoost('energy')" style="margin-left: auto;">
+                        5000 VISA
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Топ -->
+        <div id="topSection" class="section">
+            <h3>🏆 ТОП ИГРОКОВ</h3>
+            <div id="topList">
+                <div class="top-player">
+                    <div class="player-rank">🥇</div>
+                    <div class="player-info">
+                        <div style="font-weight: bold;">Твой игрок</div>
+                        <div style="font-size: 12px; opacity: 0.8;">Лучший результат</div>
+                    </div>
+                    <div class="player-stats">
+                        <span id="topPlayerVisa">0</span> VISA
+                    </div>
+                </div>
+                <p style="text-align: center; margin-top: 15px; opacity: 0.7;">
+                    Система общего топа скоро будет добавлена!
+                </p>
+            </div>
+        </div>
+        
+        <!-- Нижнее меню -->
+        <div class="bottom-menu">
+            <button class="menu-btn active" onclick="showScreen('clicker')">
+                🎮 Играть
+            </button>
+            <button class="menu-btn" onclick="showScreen('missions')">
+                🎯 Миссии
+            </button>
+            <button class="menu-btn" onclick="showScreen('wheel')">
+                🎡 Колесо
+            </button>
+            <button class="menu-btn" onclick="showScreen('shop')">
+                🏪 Магазин
+            </button>
+            <button class="menu-btn" onclick="showScreen('top')">
+                🏆 Топ
+            </button>
+        </div>
     </div>
 
-    <!-- Иконки FontAwesome -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
-
     <script>
-        // Firebase конфигурация
-        const firebaseConfig = {
-            apiKey: "AIzaSyC4wGk6vR5QhY7Qn8W6pLmJvKjXxYzAbc",
-            authDomain: "visaclicker-game.firebaseapp.com",
-            databaseURL: "https://visaclicker-game-default-rtdb.firebaseio.com",
-            projectId: "visaclicker-game",
-            storageBucket: "visaclicker-game.appspot.com",
-            messagingSenderId: "123456789012",
-            appId: "1:123456789012:web:abcdef123456"
-        };
-        
-        // Инициализация Firebase
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-        
         // Игровые данные
         let gameData = {
             username: '',
-            userId: '',
             visa: 50,
             level: 1,
             xp: 0,
@@ -655,7 +685,6 @@
             maxEnergy: 50,
             totalClicks: 0,
             gifts: 0,
-            referrals: 0,
             clickPower: 5,
             giftChance: 0.005,
             upgrades: {
@@ -664,8 +693,8 @@
                 chance: { level: 1, cost: 1200 }
             },
             boosts: {
-                click: { active: false, endTime: 0, multiplier: 1 },
-                chance: { active: false, endTime: 0, multiplier: 1 },
+                click: { active: false, endTime: 0, multiplier: 2 },
+                chance: { active: false, endTime: 0, multiplier: 2 },
                 energy: { active: false, endTime: 0 }
             },
             missions: {
@@ -673,15 +702,7 @@
                 upgrades: { current: 0, target: 5, completed: false, reward: 1000 },
                 gifts: { current: 0, target: 10, completed: false, reward: 2000 }
             },
-            daily: {
-                streak: 0,
-                lastClaim: 0,
-                nextAvailable: 0
-            },
-            achievements: {},
-            lastEnergyUpdate: Date.now(),
-            referralCode: '',
-            startTime: Date.now()
+            lastEnergyUpdate: Date.now()
         };
         
         // Уведомления
@@ -696,14 +717,15 @@
             }, 3000);
         }
         
-        // Регистрация пользователя
-        async function registerUser() {
+        // Регистрация пользователя (рабочая версия!)
+        function registerUser() {
             const usernameInput = document.getElementById('usernameInput');
             const username = usernameInput.value.trim();
             const errorDiv = document.getElementById('usernameError');
             
             errorDiv.style.display = 'none';
             
+            // Проверки
             if(!username) {
                 errorDiv.textContent = 'Введи никнейм!';
                 errorDiv.style.display = 'block';
@@ -717,42 +739,8 @@
                 return;
             }
             
-            // Проверяем ник в Firebase
-            try {
-                const snapshot = await database.ref('users').orderByChild('username').equalTo(username).once('value');
-                if(snapshot.exists()) {
-                    errorDiv.textContent = 'Этот ник уже занят!';
-                    errorDiv.style.display = 'block';
-                    return;
-                }
-            } catch(error) {
-                console.log('Firebase недоступен, используем localStorage');
-            }
-            
-            // Регистрируем
-            const userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-            const referralCode = Math.random().toString(36).substr(2, 6).toUpperCase();
-            
+            // Сохраняем
             gameData.username = username;
-            gameData.userId = userId;
-            gameData.referralCode = referralCode;
-            gameData.startTime = Date.now();
-            
-            // Сохраняем в Firebase
-            try {
-                await database.ref('users/' + userId).set({
-                    username: username,
-                    visa: gameData.visa,
-                    level: gameData.level,
-                    totalClicks: gameData.totalClicks,
-                    gifts: gameData.gifts,
-                    referrals: gameData.referrals,
-                    lastUpdate: Date.now(),
-                    referralCode: referralCode
-                });
-            } catch(error) {
-                console.log('Не удалось сохранить в Firebase');
-            }
             
             // Сохраняем в localStorage
             localStorage.setItem('visaclicker_current_user', JSON.stringify(gameData));
@@ -760,12 +748,10 @@
             // Скрываем модалку, показываем игру
             document.getElementById('loginModal').style.display = 'none';
             document.getElementById('gameInterface').style.display = 'block';
+            showScreen('clicker');
             
             // Обновляем UI
             updateUI();
-            loadTopPlayers();
-            loadMissions();
-            checkDailyBonus();
             
             showNotify(`Добро пожаловать, ${username}!`);
         }
@@ -799,7 +785,7 @@
             }
             
             // Прогресс миссий
-            gameData.missions.clicks.current++;
+            gameData.missions.clicks.current = Math.min(gameData.missions.clicks.current + 1, gameData.missions.clicks.target);
             updateMissions();
             
             // Уровень
@@ -823,7 +809,6 @@
             // Сохраняем
             saveGame();
             updateUI();
-            updateBoosts();
         }
         
         // Показать подарок
@@ -840,95 +825,38 @@
                     gift.style.display = 'none';
                     showNotify('Подарок исчез!', 'error');
                 }
-            }, 5000);
+            }, 4000);
         }
         
         // Собрать подарок
-        async function collectGift() {
+        function collectGift() {
             const gift = document.getElementById('gift');
             gift.style.display = 'none';
             
             // Тип награды
             const rand = Math.random();
             
-            if(rand < 0.6) {
+            if(rand < 0.7) {
                 // VISA
-                const amount = Math.floor(Math.random() * 200) + 100;
+                const amount = Math.floor(Math.random() * 100) + 50;
                 gameData.visa += amount;
                 showNotify(`🎁 +${amount} VISA!`);
-            } else if(rand < 0.85) {
+            } else if(rand < 0.9) {
                 // Улучшение
                 gameData.clickPower++;
                 showNotify(`🎁 Сила клика +1!`);
-            } else if(rand < 0.95) {
-                // Буст
-                const boostType = ['click', 'chance', 'energy'][Math.floor(Math.random() * 3)];
-                activateBoost(boostType, 30, 2); // 30 секунд, x2
-                showNotify(`🎁 Получен буст ${boostType}!`);
             } else {
-                // Редкий предмет
+                // Предмет
                 gameData.gifts++;
                 showNotify(`🎁 Редкий предмет! Всего: ${gameData.gifts}`);
                 
                 // Прогресс миссии
-                gameData.missions.gifts.current++;
+                gameData.missions.gifts.current = Math.min(gameData.missions.gifts.current + 1, gameData.missions.gifts.target);
                 updateMissions();
             }
             
             saveGame();
             updateUI();
-        }
-        
-        // Активация буста
-        function activateBoost(type, duration, multiplier = 2) {
-            gameData.boosts[type].active = true;
-            gameData.boosts[type].endTime = Date.now() + (duration * 1000);
-            if(multiplier) gameData.boosts[type].multiplier = multiplier;
-            
-            updateBoosts();
-        }
-        
-        // Обновление бустов
-        function updateBoosts() {
-            const now = Date.now();
-            const boostsContainer = document.getElementById('boostsContainer');
-            let html = '';
-            
-            for(const [type, boost] of Object.entries(gameData.boosts)) {
-                if(boost.active && now < boost.endTime) {
-                    const timeLeft = Math.ceil((boost.endTime - now) / 1000);
-                    let icon = '🚀';
-                    let label = '';
-                    
-                    if(type === 'click') {
-                        icon = '⚡';
-                        label = `x${boost.multiplier} кликов`;
-                    } else if(type === 'chance') {
-                        icon = '🎁';
-                        label = `x${boost.multiplier} шанс`;
-                    } else if(type === 'energy') {
-                        icon = '♾️';
-                        label = 'Беск. энергия';
-                    }
-                    
-                    html += `
-                        <div class="boost-item">
-                            <span class="boost-icon">${icon}</span>
-                            <span>${label} (${timeLeft}с)</span>
-                        </div>
-                    `;
-                }
-            }
-            
-            boostsContainer.innerHTML = html;
-            
-            // Проверяем истекшие бусты
-            Object.keys(gameData.boosts).forEach(type => {
-                if(gameData.boosts[type].active && now >= gameData.boosts[type].endTime) {
-                    gameData.boosts[type].active = false;
-                    showNotify(`Буст ${type} закончился`);
-                }
-            });
         }
         
         // Покупка улучшения
@@ -964,10 +892,8 @@
             }
             
             // Прогресс миссии
-            if(type === 'click' || type === 'energy' || type === 'chance') {
-                gameData.missions.upgrades.current++;
-                updateMissions();
-            }
+            gameData.missions.upgrades.current = Math.min(gameData.missions.upgrades.current + 1, gameData.missions.upgrades.target);
+            updateMissions();
             
             saveGame();
             updateUI();
@@ -1009,108 +935,82 @@
             showNotify('Буст активирован!');
         }
         
-        // Ежедневный бонус
-        function checkDailyBonus() {
-            const now = Date.now();
-            const lastClaim = gameData.daily.lastClaim;
-            const dayInMs = 24 * 60 * 60 * 1000;
+        // Активация буста
+        function activateBoost(type, duration, multiplier = 2) {
+            gameData.boosts[type].active = true;
+            gameData.boosts[type].endTime = Date.now() + (duration * 1000);
+            if(multiplier) gameData.boosts[type].multiplier = multiplier;
             
-            // Если прошло больше 48 часов, сбрасываем стрик
-            if(now - lastClaim > 2 * dayInMs) {
-                gameData.daily.streak = 0;
-            }
-            
-            // Если прошло больше 20 часов, можно забрать
-            const canClaim = now - lastClaim > 20 * 60 * 60 * 1000;
-            
-            document.getElementById('streakDays').textContent = gameData.daily.streak;
-            
-            if(canClaim) {
-                document.getElementById('dailyStatus').textContent = 'Сегодняшний бонус доступен!';
-                document.getElementById('dailyBtn').disabled = false;
-            } else {
-                const hoursLeft = Math.ceil((20 * 60 * 60 * 1000 - (now - lastClaim)) / (60 * 60 * 1000));
-                document.getElementById('dailyStatus').textContent = `Следующий бонус через ${hoursLeft} ч`;
-                document.getElementById('dailyBtn').disabled = true;
-            }
+            updateBoosts();
         }
         
-        function claimDailyBonus() {
+        // Обновление бустов
+        function updateBoosts() {
             const now = Date.now();
-            const lastClaim = gameData.daily.lastClaim;
-            const dayInMs = 24 * 60 * 60 * 1000;
+            const boostsContainer = document.getElementById('boostsContainer');
+            let html = '';
             
-            // Увеличиваем стрик
-            if(now - lastClaim < 2 * dayInMs) {
-                gameData.daily.streak++;
-            } else {
-                gameData.daily.streak = 1;
+            for(const [type, boost] of Object.entries(gameData.boosts)) {
+                if(boost.active && now < boost.endTime) {
+                    const timeLeft = Math.ceil((boost.endTime - now) / 1000);
+                    let icon = '⚡';
+                    let label = '';
+                    
+                    if(type === 'click') {
+                        icon = '⚡';
+                        label = `x${boost.multiplier} кликов`;
+                    } else if(type === 'chance') {
+                        icon = '🎁';
+                        label = `x${boost.multiplier} шанс`;
+                    } else if(type === 'energy') {
+                        icon = '♾️';
+                        label = 'Беск. энергия';
+                    }
+                    
+                    html += `
+                        <div class="boost-item">
+                            <div style="font-size: 20px;">${icon}</div>
+                            <div>${label}</div>
+                            <div class="boost-timer">${timeLeft}с</div>
+                        </div>
+                    `;
+                }
             }
             
-            // Награда в зависимости от стрика
-            const baseReward = 100;
-            const streakBonus = gameData.daily.streak * 50;
-            const totalReward = baseReward + streakBonus;
+            boostsContainer.innerHTML = html;
             
-            gameData.visa += totalReward;
-            gameData.daily.lastClaim = now;
-            
-            saveGame();
-            updateUI();
-            checkDailyBonus();
-            
-            showNotify(`🎁 Ежедневный бонус: +${totalReward} VISA! (Стрик: ${gameData.daily.streak})`);
+            // Проверяем истекшие бусты
+            Object.keys(gameData.boosts).forEach(type => {
+                if(gameData.boosts[type].active && now >= gameData.boosts[type].endTime) {
+                    gameData.boosts[type].active = false;
+                    showNotify(`Буст ${type} закончился`);
+                }
+            });
         }
         
         // Миссии
-        function loadMissions() {
-            const missionsList = document.getElementById('missionsList');
-            let html = '';
-            
-            const missions = [
-                { id: 'clicks', name: 'Сделай 1000 кликов', icon: '👆' },
-                { id: 'upgrades', name: 'Купи 5 улучшений', icon: '⚡' },
-                { id: 'gifts', name: 'Собери 10 подарков', icon: '🎁' }
-            ];
-            
-            missions.forEach(mission => {
-                const data = gameData.missions[mission.id];
-                const progress = (data.current / data.target) * 100;
-                const completed = data.current >= data.target && !data.completed;
-                
-                html += `
-                    <div class="mission-item">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <span style="font-size: 18px;">${mission.icon}</span>
-                                <span style="margin-left: 10px;">${mission.name}</span>
-                            </div>
-                            <div style="color: #ffd700;">
-                                ${data.current}/${data.target}
-                            </div>
-                        </div>
-                        <div class="mission-progress">
-                            <div class="mission-progress-fill" style="width: ${progress}%"></div>
-                        </div>
-                        ${completed ? `
-                            <button class="upgrade-btn" onclick="claimMission('${mission.id}')" style="margin-top: 8px; width: 100%;">
-                                🎁 Забрать ${data.reward} VISA
-                            </button>
-                        ` : ''}
-                    </div>
-                `;
-            });
-            
-            missionsList.innerHTML = html;
-        }
-        
         function updateMissions() {
-            loadMissions();
-            saveGame();
+            // Клики
+            const clicksProgress = (gameData.missions.clicks.current / gameData.missions.clicks.target) * 100;
+            document.getElementById('missionClicks').textContent = `${gameData.missions.clicks.current}/${gameData.missions.clicks.target}`;
+            document.getElementById('missionClicksBar').style.width = clicksProgress + '%';
+            document.getElementById('missionClicksBtn').disabled = gameData.missions.clicks.current < gameData.missions.clicks.target || gameData.missions.clicks.completed;
+            
+            // Улучшения
+            const upgradesProgress = (gameData.missions.upgrades.current / gameData.missions.upgrades.target) * 100;
+            document.getElementById('missionUpgrades').textContent = `${gameData.missions.upgrades.current}/${gameData.missions.upgrades.target}`;
+            document.getElementById('missionUpgradesBar').style.width = upgradesProgress + '%';
+            document.getElementById('missionUpgradesBtn').disabled = gameData.missions.upgrades.current < gameData.missions.upgrades.target || gameData.missions.upgrades.completed;
+            
+            // Подарки
+            const giftsProgress = (gameData.missions.gifts.current / gameData.missions.gifts.target) * 100;
+            document.getElementById('missionGifts').textContent = `${gameData.missions.gifts.current}/${gameData.missions.gifts.target}`;
+            document.getElementById('missionGiftsBar').style.width = giftsProgress + '%';
+            document.getElementById('missionGiftsBtn').disabled = gameData.missions.gifts.current < gameData.missions.gifts.target || gameData.missions.gifts.completed;
         }
         
-        function claimMission(missionId) {
-            const mission = gameData.missions[missionId];
+        function claimMission(type) {
+            const mission = gameData.missions[type];
             if(mission.current >= mission.target && !mission.completed) {
                 gameData.visa += mission.reward;
                 mission.completed = true;
@@ -1130,45 +1030,61 @@
             
             gameData.visa -= 500;
             
-            // Виды наград
-            const rewards = [
-                { type: 'visa', amount: 1000, chance: 40 },
-                { type: 'visa', amount: 5000, chance: 10 },
-                { type: 'boost', boost: 'click', chance: 20 },
-                { type: 'boost', boost: 'chance', chance: 15 },
-                { type: 'boost', boost: 'energy', chance: 10 },
-                { type: 'gift', chance: 5 }
-            ];
+            const wheel = document.getElementById('wheel');
+            const wheelBtn = document.getElementById('wheelBtn');
             
-            // Выбираем награду
-            const totalChance = rewards.reduce((sum, r) => sum + r.chance, 0);
-            let random = Math.random() * totalChance;
+            // Блокируем кнопку
+            wheelBtn.disabled = true;
+            wheel.classList.add('spinning');
             
-            for(const reward of rewards) {
-                if(random < reward.chance) {
-                    // Выдаем награду
-                    if(reward.type === 'visa') {
-                        gameData.visa += reward.amount;
-                        showNotify(`🎡 Вы выиграли ${reward.amount} VISA!`);
-                    } else if(reward.type === 'boost') {
-                        activateBoost(reward.boost, 60, 3);
-                        showNotify(`🎡 Вы выиграли буст ${reward.boost}!`);
-                    } else if(reward.type === 'gift') {
-                        gameData.gifts++;
-                        showNotify(`🎡 Вы выиграли редкий подарок!`);
+            // Крутим 3 секунды
+            setTimeout(() => {
+                wheel.classList.remove('spinning');
+                wheelBtn.disabled = false;
+                
+                // Награда
+                const rewards = [
+                    { type: 'visa', amount: 1000, chance: 40 },
+                    { type: 'visa', amount: 500, chance: 30 },
+                    { type: 'boost', boost: 'click', chance: 15 },
+                    { type: 'boost', boost: 'chance', chance: 10 },
+                    { type: 'gift', chance: 5 }
+                ];
+                
+                const totalChance = rewards.reduce((sum, r) => sum + r.chance, 0);
+                let random = Math.random() * totalChance;
+                let selectedReward = rewards[0];
+                
+                for(const reward of rewards) {
+                    if(random < reward.chance) {
+                        selectedReward = reward;
+                        break;
                     }
-                    break;
+                    random -= reward.chance;
                 }
-                random -= reward.chance;
-            }
-            
-            saveGame();
-            updateUI();
+                
+                // Выдаем награду
+                if(selectedReward.type === 'visa') {
+                    gameData.visa += selectedReward.amount;
+                    showNotify(`🎡 Вы выиграли ${selectedReward.amount} VISA!`);
+                } else if(selectedReward.type === 'boost') {
+                    activateBoost(selectedReward.boost, 60, 3);
+                    showNotify(`🎡 Вы выиграли буст ${selectedReward.boost}!`);
+                } else if(selectedReward.type === 'gift') {
+                    gameData.gifts++;
+                    gameData.missions.gifts.current = Math.min(gameData.missions.gifts.current + 1, gameData.missions.gifts.target);
+                    showNotify(`🎡 Вы выиграли редкий подарок!`);
+                }
+                
+                saveGame();
+                updateUI();
+                
+            }, 3000);
         }
         
         // Обновление энергии
         function updateEnergy() {
-            if(gameData.boosts.energy.active) return; // Если бесконечная энергия
+            if(gameData.boosts.energy.active) return;
             
             const now = Date.now();
             const timeDiff = (now - gameData.lastEnergyUpdate) / 1000 / 60;
@@ -1183,111 +1099,8 @@
         }
         
         // Сохранение игры
-        async function saveGame() {
-            // Сохраняем в localStorage
+        function saveGame() {
             localStorage.setItem('visaclicker_current_user', JSON.stringify(gameData));
-            
-            // Сохраняем в Firebase
-            if(gameData.userId) {
-                try {
-                    await database.ref('users/' + gameData.userId).update({
-                        username: gameData.username,
-                        visa: gameData.visa,
-                        level: gameData.level,
-                        totalClicks: gameData.totalClicks,
-                        gifts: gameData.gifts,
-                        referrals: gameData.referrals,
-                        lastUpdate: Date.now()
-                    });
-                } catch(error) {
-                    console.log('Не удалось сохранить в Firebase');
-                }
-            }
-        }
-        
-        // Загрузка топа из Firebase
-        async function loadTopPlayers() {
-            try {
-                const snapshot = await database.ref('users').orderByChild('visa').limitToLast(10).once('value');
-                const topList = document.getElementById('topList');
-                
-                if(!snapshot.exists()) {
-                    topList.innerHTML = '<div style="text-align: center; padding: 20px; opacity: 0.7;">Нет игроков в топе</div>';
-                    return;
-                }
-                
-                let players = [];
-                snapshot.forEach(child => {
-                    players.push({
-                        id: child.key,
-                        ...child.val()
-                    });
-                });
-                
-                // Сортируем по VISA
-                players.sort((a, b) => b.visa - a.visa);
-                
-                let html = '';
-                const medals = ['🥇', '🥈', '🥉', '4.', '5.', '6.', '7.', '8.', '9.', '10.'];
-                
-                players.slice(0, 10).forEach((player, index) => {
-                    html += `
-                        <div class="top-player">
-                            <div class="player-rank">${medals[index] || (index+1+'.')}</div>
-                            <div class="player-info">
-                                <div style="font-weight: bold;">${player.username}</div>
-                                <div style="font-size: 12px; opacity: 0.8;">
-                                    Ур. ${player.level} | Кликов: ${player.totalClicks || 0}
-                                </div>
-                            </div>
-                            <div class="player-stats">
-                                ${player.visa} VISA
-                            </div>
-                        </div>
-                    `;
-                });
-                
-                topList.innerHTML = html;
-            } catch(error) {
-                console.log('Не удалось загрузить топ из Firebase');
-                // Показываем локальный топ как запасной вариант
-                showLocalTop();
-            }
-        }
-        
-        // Локальный топ (запасной вариант)
-        function showLocalTop() {
-            const users = JSON.parse(localStorage.getItem('visaclicker_users') || '{}');
-            const topList = document.getElementById('topList');
-            
-            if(Object.keys(users).length === 0) {
-                topList.innerHTML = '<div style="text-align: center; padding: 20px; opacity: 0.7;">Нет игроков</div>';
-                return;
-            }
-            
-            const players = Object.entries(users).map(([username, data]) => ({
-                username,
-                ...data
-            })).sort((a, b) => b.visa - a.visa);
-            
-            let html = '';
-            const medals = ['🥇', '🥈', '🥉', '4.', '5.'];
-            
-            players.slice(0, 5).forEach((player, index) => {
-                html += `
-                    <div class="top-player">
-                        <div class="player-rank">${medals[index] || (index+1+'.')}</div>
-                        <div class="player-info">
-                            <div style="font-weight: bold;">${player.username}</div>
-                        </div>
-                        <div class="player-stats">
-                            ${player.visa} VISA
-                        </div>
-                    </div>
-                `;
-            });
-            
-            topList.innerHTML = html;
         }
         
         // Обновление UI
@@ -1303,6 +1116,7 @@
             document.getElementById('levelCount').textContent = gameData.level;
             document.getElementById('clicksCount').textContent = gameData.totalClicks;
             document.getElementById('giftsCount').textContent = gameData.gifts;
+            document.getElementById('topPlayerVisa').textContent = gameData.visa;
             
             // Прогресс
             const xpPercent = (gameData.xp / gameData.xpNeeded) * 100;
@@ -1355,50 +1169,50 @@
             document.getElementById('clickBtn').disabled = gameData.visa < gameData.upgrades.click.cost;
             document.getElementById('energyBtn').disabled = gameData.visa < gameData.upgrades.energy.cost;
             document.getElementById('chanceBtn').disabled = gameData.visa < gameData.upgrades.chance.cost;
+            
+            // Кнопка колеса
+            document.getElementById('wheelBtn').disabled = gameData.visa < 500;
         }
         
-        // Показать секцию
-        function showSection(section) {
-            // Скрываем все
-            const sections = ['daily', 'missions', 'inventory', 'top', 'clan', 'shop', 'wheel', 'referral'];
-            sections.forEach(sec => {
-                document.getElementById(sec + 'Section').style.display = 'none';
+        // Показать экран
+        function showScreen(screen) {
+            // Скрываем все экраны
+            const screens = ['clicker', 'missions', 'wheel', 'shop', 'top'];
+            screens.forEach(s => {
+                document.getElementById(s + 'Screen')?.style.display = 'none';
+                document.getElementById(s + 'Section')?.style.display = 'none';
             });
             
-            // Показываем нужную
-            document.getElementById(section + 'Section').style.display = 'block';
+            // Убираем активные кнопки
+            document.querySelectorAll('.menu-btn').forEach(btn => btn.classList.remove('active'));
             
-            if(section === 'top') {
-                loadTopPlayers();
+            // Показываем нужный экран
+            if(screen === 'clicker') {
+                document.getElementById('clickerScreen').style.display = 'block';
+                document.querySelector('.menu-btn:nth-child(1)').classList.add('active');
+            } else {
+                document.getElementById(screen + 'Section').style.display = 'block';
+                document.querySelector(`.menu-btn:nth-child(${screens.indexOf(screen) + 1})`).classList.add('active');
             }
-            if(section === 'missions') {
-                loadMissions();
-            }
-            if(section === 'daily') {
-                checkDailyBonus();
+            
+            // Обновляем миссии при переходе
+            if(screen === 'missions') {
+                updateMissions();
             }
         }
         
         // Загрузка сохраненной игры
-        window.onload = async function() {
+        window.onload = function() {
             const savedUser = localStorage.getItem('visaclicker_current_user');
             
             if(savedUser) {
                 try {
                     gameData = JSON.parse(savedUser);
-                    
-                    // Проверяем, не устарели ли данные
-                    const now = Date.now();
-                    if(now - gameData.lastEnergyUpdate > 30 * 60 * 1000) {
-                        gameData.lastEnergyUpdate = now - (10 * 60 * 1000); // 10 минут назад
-                    }
-                    
                     document.getElementById('loginModal').style.display = 'none';
                     document.getElementById('gameInterface').style.display = 'block';
+                    showScreen('clicker');
                     updateUI();
-                    loadTopPlayers();
-                    loadMissions();
-                    checkDailyBonus();
+                    updateMissions();
                 } catch(e) {
                     console.error('Ошибка загрузки:', e);
                 }
@@ -1407,11 +1221,13 @@
             // Обновление каждую минуту
             setInterval(() => {
                 updateUI();
-                saveGame();
             }, 60000);
             
             // Обновление бустов каждую секунду
             setInterval(updateBoosts, 1000);
+            
+            // Автосохранение каждые 30 секунд
+            setInterval(saveGame, 30000);
         };
     </script>
 </body>
