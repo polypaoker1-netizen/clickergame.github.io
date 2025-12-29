@@ -146,7 +146,7 @@
             background: linear-gradient(90deg, #fdcb6e, #e17055); 
         }
         
-        /* Кликер - ПЕРЕМЕЩЕН ВЫШЕ */
+        /* Кликер */
         .clicker {
             text-align: center;
             margin: 25px 0;
@@ -202,7 +202,7 @@
             border-radius: 12px;
         }
         
-        /* БОНУСНЫЕ КНОПКИ - ДОБАВЛЕНО НИЖЕ КЛИКЕРА */
+        /* БОНУСНЫЕ КНОПКИ */
         .bonus-buttons {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -230,6 +230,14 @@
             background: rgba(233, 69, 96, 0.3);
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(233, 69, 96, 0.2);
+        }
+        
+        .bonus-btn.paid {
+            border-color: #00b894;
+        }
+        
+        .bonus-btn.paid:hover {
+            background: rgba(0, 184, 148, 0.3);
         }
         
         /* Эффект при клике */
@@ -324,7 +332,7 @@
             box-shadow: 0 0 15px #00b894;
         }
         
-        /* Игра 777 - ПЕРЕМЕЩЕНА НИЖЕ */
+        /* Игра 777 */
         .game-777 {
             background: linear-gradient(145deg, rgba(121, 40, 202, 0.2), rgba(41, 128, 185, 0.2));
             padding: 20px;
@@ -584,6 +592,11 @@
             transition: width 0.5s;
         }
         
+        .mission-completed {
+            color: #00ff88;
+            font-weight: bold;
+        }
+        
         /* Магазин */
         .shop-item {
             background: rgba(255,255,255,0.05);
@@ -630,15 +643,6 @@
         .inventory-icon {
             font-size: 32px;
             margin-bottom: 10px;
-        }
-        
-        .inventory-item.locked {
-            opacity: 0.5;
-            background: rgba(255,255,255,0.03);
-        }
-        
-        .inventory-item.locked .inventory-icon {
-            filter: grayscale(100%);
         }
         
         /* Колесо фортуны */
@@ -702,6 +706,10 @@
             .stats {
                 grid-template-columns: repeat(2, 1fr);
             }
+            
+            .bonus-buttons {
+                grid-template-columns: 1fr;
+            }
         }
         
         .modal-btn {
@@ -721,6 +729,29 @@
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0, 184, 148, 0.4);
         }
+        
+        /* NFT - заблокированная вкладка */
+        .locked-section {
+            text-align: center;
+            padding: 50px 20px;
+            opacity: 0.6;
+        }
+        
+        .locked-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        
+        .locked-message {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #ffd700;
+        }
+        
+        .locked-submessage {
+            font-size: 14px;
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
@@ -728,10 +759,10 @@
     <div id="game777Overlay" class="game777-overlay">
         <div class="game777-content">
             <h2>🎰 ИГРА 777</h2>
-            <p id="game777Text">Сделай более <span id="targetClicks">50</span> кликов за 10 секунд!</p>
+            <p id="game777Text">Сделай более <span id="targetClicks">50</span> кликов за <span id="targetTime">10</span> секунд!</p>
             <div class="challenge-timer" id="game777Timer">10</div>
             <div class="challenge-clicks">Кликов: <span id="game777Clicks">0</span></div>
-            <div class="challenge-target">Цель: <span id="game777Target">50</span></div>
+            <div class="challenge-target">Цель: <span id="game777Target">50</span> кликов за <span id="game777Time">10</span>сек</div>
             <div style="margin: 25px 0;">
                 <div class="click-area" style="width: 150px; height: 150px; margin: 0 auto;" onclick="countGame777Click()">
                     ЖМИ!
@@ -778,7 +809,7 @@
             </div>
         </div>
         
-        <!-- Кликер - ПЕРЕМЕЩЕН В САМЫЙ ВЕРХ -->
+        <!-- Кликер -->
         <div id="clickerScreen" class="screen" style="display: block;">
             <!-- Статистика -->
             <div class="stats">
@@ -819,7 +850,7 @@
                 </div>
             </div>
             
-            <!-- КЛИКЕР - ТЕПЕРЬ ЗДЕСЬ -->
+            <!-- КЛИКЕР -->
             <div class="clicker">
                 <div class="click-area" onclick="handleClick(event)" id="clickArea">
                     КЛИКАЙ!
@@ -828,32 +859,32 @@
                     <div>💪 Сила клика: <span id="powerValue" style="color: #00ff88;">x5</span></div>
                     <div>🎁 Шанс подарка: <span id="chanceValue" style="color: gold;">0.5%</span></div>
                     <div>⚡ Энергия/клик: <span id="energyPerClick">0.1</span></div>
-                    <div>🔋 Восстановление: <span id="energyRegen">1/мин</span></div>
+                    <div>🔋 Восстановление: <span id="energyRegen">1/сек</span></div>
                 </div>
             </div>
             
-            <!-- БОНУСНЫЕ КНОПКИ - ДОБАВЛЕНЫ НИЖЕ КЛИКЕРА -->
+            <!-- БОНУСНЫЕ КНОПКИ -->
             <div class="bonus-buttons">
                 <button class="bonus-btn" onclick="quickBonus()">
                     ⚡ Быстрый бонус
                 </button>
-                <button class="bonus-btn" onclick="energyRefill()">
-                    🔋 Восстановить энергию
+                <button class="bonus-btn paid" onclick="buyEnergy()">
+                    🔋 Купить энергию
                 </button>
                 <button class="bonus-btn" onclick="dailyReward()">
                     📅 Ежедневная награда
                 </button>
-                <button class="bonus-btn" onclick="specialOffer()">
+                <button class="bonus-btn paid" onclick="specialOffer()">
                     💎 Спецпредложение
                 </button>
             </div>
             
-            <!-- Игра 777 - ПЕРЕМЕЩЕНА НИЖЕ -->
+            <!-- Игра 777 -->
             <div class="game-777">
                 <h3 style="margin-bottom: 15px; color: #9b59b6;">🎰 ИГРА 777</h3>
                 <p style="margin-bottom: 15px; font-size: 14px; opacity: 0.9;">
-                    Сделай ставку и попробуй сделать более 50 кликов за 10 секунд!
-                    Выигрыш: x2.5 от ставки!
+                    Усложняющаяся игра! Сделай нужное количество кликов за отведенное время!
+                    Выигрыш: x3 от ставки!
                 </p>
                 
                 <div style="margin-bottom: 15px;">
@@ -867,6 +898,11 @@
                         <button class="bet-btn" onclick="setBet(2500)">2500</button>
                         <button class="bet-btn" onclick="setBet(5000)">5000</button>
                     </div>
+                </div>
+                
+                <div style="background: rgba(155, 89, 182, 0.2); padding: 10px; border-radius: 10px; margin: 15px 0;">
+                    <div>Сложность: <span id="gameDifficulty">1</span> уровень</div>
+                    <div>Цель: <span id="gameTargetDisplay">50</span> кликов за <span id="gameTimeDisplay">10</span> сек</div>
                 </div>
                 
                 <button class="game-777-btn" onclick="startGame777()" id="start777Btn">
@@ -910,7 +946,7 @@
                 <div class="upgrade-item">
                     <div>
                         <div style="font-weight: bold; font-size: 16px;">🔋 Восстановление</div>
-                        <div style="font-size: 13px; opacity: 0.8;">Текущее: <span id="regenSpeed">1</span>/мин</div>
+                        <div style="font-size: 13px; opacity: 0.8;">Текущее: <span id="regenSpeed">1</span>/сек</div>
                     </div>
                     <button class="upgrade-btn" onclick="buyUpgrade('regen')" id="regenBtn">
                         1500 VISA
@@ -965,7 +1001,7 @@
             <div class="mission-item">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                     <span>🔔 Подпишись на канал</span>
-                    <span>❌ Не выполнено</span>
+                    <span id="telegramStatus">❌ Не выполнено</span>
                 </div>
                 <button class="upgrade-btn" onclick="completeTelegramMission()" id="telegramBtn" style="width: 100%; margin-top: 10px;">
                     ПОДПИСАТЬСЯ (+500 VISA)
@@ -975,7 +1011,7 @@
             <div class="mission-item">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                     <span>👍 Поставь реакцию на пост</span>
-                    <span>❌ Не выполнено</span>
+                    <span id="reactionStatus">❌ Не выполнено</span>
                 </div>
                 <button class="upgrade-btn" onclick="completeReactionMission()" id="reactionBtn" style="width: 100%; margin-top: 10px;">
                     ПОСТАВИТЬ РЕАКЦИЮ (+300 VISA)
@@ -1031,38 +1067,14 @@
                 </button>
             </div>
             
-            <!-- Новая вкладка NFT подарки -->
-            <h3 style="margin: 30px 0 20px 0; color: #ffd700;">🎨 NFT ПОДАРКИ</h3>
+            <!-- NFT вкладка - ЗАБЛОКИРОВАНА -->
+            <h3 style="margin: 30px 0 20px 0; color: #ffd700;">🎨 NFT-ПОДАРКИ</h3>
             
-            <div class="shop-item">
-                <div class="shop-icon" style="background: rgba(255, 215, 0, 0.2);">👑</div>
-                <div style="flex: 1;">
-                    <div style="font-weight: bold; font-size: 16px;">Золотой кликер NFT</div>
-                    <div style="font-size: 13px; opacity: 0.8;">Редкий NFT-предмет</div>
-                </div>
-                <button class="upgrade-btn" onclick="showComingSoon()" style="opacity: 0.7; background: #666;">
-                    СКОРО
-                </button>
-            </div>
-            
-            <div class="shop-item">
-                <div class="shop-icon" style="background: rgba(155, 89, 182, 0.2);">💎</div>
-                <div style="flex: 1;">
-                    <div style="font-weight: bold; font-size: 16px;">Бриллиантовая карта NFT</div>
-                    <div style="font-size: 13px; opacity: 0.8;">Эксклюзивный NFT</div>
-                </div>
-                <button class="upgrade-btn" onclick="showComingSoon()" style="opacity: 0.7; background: #666;">
-                    СКОРО
-                </button>
-            </div>
-            
-            <div class="shop-item">
-                <div class="shop-icon" style="background: rgba(0, 184, 148, 0.2);">🚀</div>
-                <div style="flex: 1;">
-                    <div style="font-weight: bold; font-size: 16px;">Космический буст NFT</div>
-                    <div style="font-size: 13px; opacity: 0.8;">Уникальный NFT</div>
-                </div>
-                <button class="upgrade-btn" onclick="showComingSoon()" style="opacity: 0.7; background: #666;">
+            <div class="locked-section">
+                <div class="locked-icon">🔒</div>
+                <div class="locked-message">Функция временно недоступна</div>
+                <div class="locked-submessage">NFT-подарки появятся в ближайшем обновлении!</div>
+                <button class="modal-btn" onclick="showComingSoon()" style="margin-top: 20px; background: linear-gradient(135deg, #666, #888);">
                     СКОРО
                 </button>
             </div>
@@ -1081,33 +1093,13 @@
                 </div>
             </div>
             
-            <!-- Заблокированные предметы -->
-            <h4 style="margin: 20px 0 10px 0; color: rgba(255,255,255,0.6);">🔒 Заблокированные предметы</h4>
-            <div class="inventory-grid">
-                <div class="inventory-item locked">
-                    <div class="inventory-icon">👑</div>
-                    <div style="font-weight: bold; font-size: 12px;">Золотой NFT</div>
-                    <div style="font-size: 10px; opacity: 0.7;">Уровень 10</div>
-                </div>
-                <div class="inventory-item locked">
-                    <div class="inventory-icon">💎</div>
-                    <div style="font-weight: bold; font-size: 12px;">Бриллиант NFT</div>
-                    <div style="font-size: 10px; opacity: 0.7;">Уровень 20</div>
-                </div>
-                <div class="inventory-item locked">
-                    <div class="inventory-icon">🚀</div>
-                    <div style="font-weight: bold; font-size: 12px;">Космический NFT</div>
-                    <div style="font-size: 10px; opacity: 0.7;">Уровень 30</div>
-                </div>
-            </div>
-            
             <div style="margin-top: 20px; padding: 15px; background: rgba(255,215,0,0.1); border-radius: 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <div>
-                        <div style="font-weight: bold;">Редкие предметы:</div>
-                        <div style="font-size: 13px; opacity: 0.8;">Золотой кликер, Бриллиантовая энергия</div>
+                        <div style="font-weight: bold;">Всего предметов:</div>
+                        <div style="font-size: 13px; opacity: 0.8;">Активные бусты и подарки</div>
                     </div>
-                    <div id="rareItemsCount" style="font-size: 24px; color: #ffd700;">0</div>
+                    <div id="itemsCount" style="font-size: 24px; color: #ffd700;">0</div>
                 </div>
             </div>
         </div>
@@ -1143,39 +1135,7 @@
             </div>
         </div>
         
-        <!-- Топ -->
-        <div id="topScreen" class="section">
-            <h3 style="margin-bottom: 20px; color: #e94560;">🏆 ТОП ИГРОКОВ</h3>
-            
-            <div style="margin-bottom: 20px;">
-                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                    <button class="menu-btn" onclick="showTop('daily')" id="dailyTopBtn" style="flex: 1;">📅 За день</button>
-                    <button class="menu-btn active" onclick="showTop('all')" id="allTopBtn" style="flex: 1;">🏆 Все время</button>
-                    <button class="menu-btn" onclick="showTop('friends')" id="friendsTopBtn" style="flex: 1;">👥 Друзья</button>
-                </div>
-            </div>
-            
-            <div id="topList">
-                <!-- Топ будет генерироваться здесь -->
-                <div style="text-align: center; padding: 40px 0; opacity: 0.5;">
-                    <div style="font-size: 48px; margin-bottom: 20px;">👑</div>
-                    <div>Топ игроков</div>
-                    <div style="font-size: 13px; margin-top: 5px;">Будь первым в рейтинге!</div>
-                </div>
-            </div>
-            
-            <div style="margin-top: 20px; padding: 15px; background: rgba(233, 69, 96, 0.1); border-radius: 12px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <div style="font-weight: bold;">Твоя позиция:</div>
-                        <div style="font-size: 13px; opacity: 0.8;">Обновляется каждые 5 минут</div>
-                    </div>
-                    <div id="playerRank" style="font-size: 24px; color: #ffd700;">#1</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Нижнее меню -->
+        <!-- Нижнее меню (без топа) -->
         <div class="bottom-menu">
             <button class="menu-btn active" onclick="showScreen('clicker')">
                 🎮 Игра
@@ -1192,9 +1152,6 @@
             <button class="menu-btn" onclick="showScreen('wheel')">
                 🎡 Фортуна
             </button>
-            <button class="menu-btn" onclick="showScreen('top')">
-                🏆 Топ
-            </button>
         </div>
     </div>
 
@@ -1203,7 +1160,7 @@
         // ИГРОВЫЕ ДАННЫЕ
         // ======================
         let gameData = {
-            username: 'TelegramUser',
+            username: 'Игрок',
             visa: 50,
             level: 1,
             xp: 0,
@@ -1214,8 +1171,8 @@
             giftsCollected: 0,
             puzzlesCollected: 0,
             clickPower: 5,
-            giftChance: 0.005, // 0.5%
-            puzzleChance: 0.001, // 0.1% - очень редко
+            giftChance: 0.005,
+            puzzleChance: 0.001,
             energyCost: 0.1,
             energyRegen: 1,
             upgrades: {
@@ -1242,17 +1199,21 @@
             lastWheelSpin: 0,
             lastEnergyUpdate: Date.now(),
             dailyRewardClaimed: false,
-            lastBonusTime: 0
+            lastBonusTime: 0,
+            game777Level: 1,
+            last777Play: 0
         };
 
-        // Игра 777
+        // Игра 777 с усложняющимися уровнями
         let game777 = {
             active: false,
             timeLeft: 10,
             clicks: 0,
             target: 50,
+            timeLimit: 10,
             bet: 1000,
-            timer: null
+            timer: null,
+            level: 1
         };
 
         // Головоломка
@@ -1262,9 +1223,6 @@
             currentPuzzle: null,
             selectedTiles: []
         };
-
-        // Топ игроков - ИСПРАВЛЕНО: теперь использует данные из localStorage
-        let topPlayers = [];
 
         // ======================
         // УВЕДОМЛЕНИЯ
@@ -1314,7 +1272,7 @@
         }
 
         // ======================
-        // ОСНОВНОЙ КЛИК С УЛУЧШЕННЫМИ ПОДАРКАМИ
+        // ОСНОВНОЙ КЛИК
         // ======================
         function handleClick(event) {
             // Создаем эффект
@@ -1345,7 +1303,7 @@
             gameData.xp += 2;
             gameData.energy -= gameData.energyCost;
             
-            // Проверка подарка - ОЧЕНЬ РЕДКО
+            // Проверка подарка
             let chance = gameData.giftChance;
             if (gameData.boosts.chance.active) {
                 chance *= gameData.boosts.chance.multiplier;
@@ -1355,7 +1313,7 @@
                 showGift();
             }
             
-            // Проверка головоломки - ОЧЕНЬ-ОЧЕНЬ РЕДКО
+            // Проверка головоломки
             if (Math.random() < gameData.puzzleChance && !puzzleGame.active) {
                 showPuzzle();
             }
@@ -1374,7 +1332,7 @@
         }
 
         // ======================
-        // ПОДАРКИ С РАЗНЫМИ НАГРАДАМИ
+        // ПОДАРКИ
         // ======================
         function showGift() {
             const gift = document.getElementById('gift');
@@ -1398,12 +1356,12 @@
             
             gameData.giftsCollected++;
             
-            // Тип награды - разные уровни редкости
+            // Тип награды
             const rand = Math.random();
             
             if (rand < 0.85) {
-                // VISA (обычный, не больше 1000)
-                const amount = Math.floor(Math.random() * 800) + 200; // 200-1000 VISA
+                // VISA (200-1000)
+                const amount = Math.floor(Math.random() * 800) + 200;
                 if (gameData.boosts.reward.active) {
                     amount *= gameData.boosts.reward.multiplier;
                 }
@@ -1440,13 +1398,13 @@
                 showNotify(`🎁 Найден буст: ${boostName}!`, 'success');
                 updateInventory();
             } else {
-                // Супер редкий (1% шанс)
-                const amount = Math.floor(Math.random() * 1000) + 1000; // 1000-2000 VISA
+                // Супер редкий
+                const amount = Math.floor(Math.random() * 1000) + 1000;
                 if (gameData.boosts.reward.active) {
                     amount *= gameData.boosts.reward.multiplier;
                 }
                 gameData.visa += amount;
-                gameData.clickPower += 1; // +1 к силе клика
+                gameData.clickPower += 1;
                 showNotify(`🎁 СУПЕР ПОДАРОК! +${amount} VISA и +1 к силе клика!`, 'success');
             }
             
@@ -1465,18 +1423,15 @@
             const symbols = ['⭐', '🎯', '💰', '⚡', '🎁', '🔋', '👑', '💎', '🚀'];
             const puzzleSymbols = [];
             
-            // Выбираем 3 случайных символа
             for (let i = 0; i < 3; i++) {
                 puzzleSymbols.push(symbols[Math.floor(Math.random() * symbols.length)]);
             }
             
-            // Создаем 9 тайлов (3 пары + 3 уникальных)
             const tiles = [...puzzleSymbols, ...puzzleSymbols];
             while (tiles.length < 9) {
                 tiles.push(symbols[Math.floor(Math.random() * symbols.length)]);
             }
             
-            // Перемешиваем
             for (let i = tiles.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
@@ -1487,13 +1442,11 @@
                 tiles: tiles
             };
             
-            // Показываем оверлей
             document.getElementById('puzzleOverlay').style.display = 'flex';
             document.getElementById('puzzleDescription').textContent = 'Найди 3 одинаковых символа!';
             document.getElementById('puzzleAttempts').textContent = puzzleGame.attempts;
             document.getElementById('puzzleReward').textContent = '500 VISA + Буст';
             
-            // Генерируем тайлы
             const grid = document.getElementById('puzzleGrid');
             grid.innerHTML = '';
             
@@ -1515,11 +1468,9 @@
             const tile = document.querySelector(`.puzzle-tile[data-index="${index}"]`);
             
             if (puzzleGame.selectedTiles.includes(index)) {
-                // Убираем выделение
                 puzzleGame.selectedTiles = puzzleGame.selectedTiles.filter(i => i !== index);
                 tile.classList.remove('active');
             } else if (puzzleGame.selectedTiles.length < 3) {
-                // Добавляем выделение
                 puzzleGame.selectedTiles.push(index);
                 tile.classList.add('active');
             }
@@ -1534,7 +1485,6 @@
             puzzleGame.attempts--;
             document.getElementById('puzzleAttempts').textContent = puzzleGame.attempts;
             
-            // Проверяем, одинаковые ли символы
             const selectedSymbols = puzzleGame.selectedTiles.map(index => 
                 puzzleGame.currentPuzzle.tiles[index]
             );
@@ -1542,27 +1492,22 @@
             const allSame = selectedSymbols.every(symbol => symbol === selectedSymbols[0]);
             
             if (allSame) {
-                // ПОБЕДА
                 closePuzzle();
                 
-                // Награда
-                const reward = 500 + Math.floor(Math.random() * 500); // 500-1000 VISA
+                const reward = 500 + Math.floor(Math.random() * 500);
                 gameData.visa += reward;
                 gameData.puzzlesCollected++;
                 
-                // Добавляем случайный буст
                 const boostTypes = ['click', 'chance', 'energy'];
                 const randomBoost = boostTypes[Math.floor(Math.random() * boostTypes.length)];
                 activateBoost(randomBoost, 10 * 60 * 1000, randomBoost === 'click' ? 2 : randomBoost === 'chance' ? 2 : 1);
                 
                 showNotify(`🧩 ГОЛОВОЛОМКА РЕШЕНА! +${reward} VISA и буст!`, 'success');
             } else {
-                // НЕПРАВИЛЬНО
                 if (puzzleGame.attempts <= 0) {
                     closePuzzle();
                     showNotify('🧩 Попытки закончились! Попробуй в другой раз', 'error');
                 } else {
-                    // Сбрасываем выделение
                     puzzleGame.selectedTiles.forEach(index => {
                         const tile = document.querySelector(`.puzzle-tile[data-index="${index}"]`);
                         tile.classList.remove('active');
@@ -1583,26 +1528,22 @@
         }
 
         // ======================
-        // ИГРА 777
+        // ИГРА 777 с усложнением
         // ======================
         function setBet(amount) {
             if (game777.active) return;
             
             game777.bet = amount;
             
-            // Обновляем кнопки
             document.querySelectorAll('.bet-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
             
-            // Активируем выбранную кнопку
             event.target.classList.add('active');
             
-            // Обновляем отображение
             document.getElementById('currentBet').textContent = amount;
             document.getElementById('betAmount').textContent = amount;
             
-            // Проверяем, хватает ли денег
             const btn = document.getElementById('start777Btn');
             if (gameData.visa < amount) {
                 btn.disabled = true;
@@ -1611,6 +1552,31 @@
                 btn.disabled = false;
                 btn.style.opacity = '1';
             }
+        }
+
+        function updateGame777Difficulty() {
+            const level = gameData.game777Level;
+            
+            // Усложняющиеся уровни
+            switch(level % 3) {
+                case 1:
+                    game777.target = 50 + (Math.floor(level/3) * 10);
+                    game777.timeLimit = 10;
+                    break;
+                case 2:
+                    game777.target = 77 + (Math.floor(level/3) * 15);
+                    game777.timeLimit = 10;
+                    break;
+                case 0:
+                    game777.target = 50 + (Math.floor(level/3) * 10);
+                    game777.timeLimit = 7;
+                    break;
+            }
+            
+            // Обновляем отображение
+            document.getElementById('gameDifficulty').textContent = level;
+            document.getElementById('gameTargetDisplay').textContent = game777.target;
+            document.getElementById('gameTimeDisplay').textContent = game777.timeLimit;
         }
 
         function startGame777() {
@@ -1627,9 +1593,8 @@
             
             // Настраиваем игру
             game777.active = true;
-            game777.timeLeft = 10;
+            game777.timeLeft = game777.timeLimit;
             game777.clicks = 0;
-            game777.target = 50;
             
             // Показываем оверлей
             document.getElementById('game777Overlay').style.display = 'flex';
@@ -1637,6 +1602,8 @@
             document.getElementById('game777Clicks').textContent = '0';
             document.getElementById('game777Target').textContent = game777.target;
             document.getElementById('targetClicks').textContent = game777.target;
+            document.getElementById('game777Time').textContent = game777.timeLimit;
+            document.getElementById('targetTime').textContent = game777.timeLimit;
             document.getElementById('game777CloseBtn').style.display = 'none';
             
             // Запускаем таймер
@@ -1650,26 +1617,23 @@
             }, 1000);
             
             updateUI();
-            showNotify(`🎰 Игра началась! Сделай более ${game777.target} кликов за 10 секунд!`, 'warning');
+            showNotify(`🎰 Уровень ${gameData.game777Level}: ${game777.target} кликов за ${game777.timeLimit} сек!`, 'warning');
         }
 
         function countGame777Click() {
             if (!game777.active) return;
             
-            // Анимация
             const clickArea = event.currentTarget;
             clickArea.style.transform = 'scale(0.9)';
             setTimeout(() => {
                 clickArea.style.transform = 'scale(1)';
             }, 100);
             
-            // Увеличиваем счетчик
             game777.clicks++;
             document.getElementById('game777Clicks').textContent = game777.clicks;
             
-            // Меняем цвет таймера при хорошем темпе
             const timer = document.getElementById('game777Timer');
-            const clicksPerSecond = game777.clicks / (10 - game777.timeLeft);
+            const clicksPerSecond = game777.clicks / (game777.timeLimit - game777.timeLeft);
             
             if (clicksPerSecond > 8) {
                 timer.style.color = '#00ff88';
@@ -1689,18 +1653,18 @@
             const btn = document.getElementById('game777CloseBtn');
             const text = document.getElementById('game777Text');
             
-            // Проверяем результат
             if (game777.clicks >= game777.target) {
                 // ПОБЕДА
-                const winAmount = Math.floor(game777.bet * 2.5);
+                const winAmount = Math.floor(game777.bet * 3); // x3 вместо x2.5
                 gameData.visa += winAmount;
+                gameData.game777Level++; // Увеличиваем уровень сложности
                 
                 text.innerHTML = `🎉 ПОБЕДА! Ты сделал <span style="color:#00ff88">${game777.clicks}</span> кликов!`;
                 btn.textContent = `ЗАБРАТЬ ${winAmount} VISA`;
                 btn.style.display = 'block';
                 btn.style.background = 'linear-gradient(135deg, #00b894, #00cec9)';
                 
-                showNotify(`🎰 ПОБЕДА! +${winAmount} VISA!`, 'success');
+                showNotify(`🎰 ПОБЕДА! +${winAmount} VISA! Уровень сложности повышен!`, 'success');
             } else {
                 // ПОРАЖЕНИЕ
                 text.innerHTML = `😢 Поражение... Ты сделал только <span style="color:#e94560">${game777.clicks}</span> из ${game777.target} кликов`;
@@ -1711,7 +1675,9 @@
                 showNotify(`🎰 Поражение... Потеряно ${game777.bet} VISA`, 'error');
             }
             
-            // Сохраняем игру
+            // Обновляем сложность для следующей игры
+            updateGame777Difficulty();
+            
             saveGame();
             updateUI();
         }
@@ -1727,13 +1693,13 @@
         // ======================
         function quickBonus() {
             const now = Date.now();
-            if (now - gameData.lastBonusTime < 60000) { // 1 минута кд
+            if (now - gameData.lastBonusTime < 60000) {
                 const secondsLeft = Math.ceil((60000 - (now - gameData.lastBonusTime)) / 1000);
                 showNotify(`⏳ Подожди ${secondsLeft} секунд`, 'warning');
                 return;
             }
             
-            const bonusAmount = 50 + Math.floor(Math.random() * 150); // 50-200 VISA
+            const bonusAmount = 50 + Math.floor(Math.random() * 150);
             gameData.visa += bonusAmount;
             gameData.lastBonusTime = now;
             
@@ -1742,16 +1708,17 @@
             updateUI();
         }
 
-        function energyRefill() {
-            if (gameData.energy >= gameData.maxEnergy) {
-                showNotify('⚡ Энергия уже полная!', 'warning');
+        function buyEnergy() {
+            const cost = 500;
+            if (gameData.visa < cost) {
+                showNotify(`❌ Недостаточно VISA! Нужно ${cost}`, 'error');
                 return;
             }
             
-            const refillAmount = Math.floor(gameData.maxEnergy * 0.5); // 50% от максимума
-            gameData.energy = Math.min(gameData.maxEnergy, gameData.energy + refillAmount);
+            gameData.visa -= cost;
+            gameData.energy = gameData.maxEnergy;
             
-            showNotify(`🔋 Энергия восстановлена на ${refillAmount} единиц!`, 'success');
+            showNotify(`🔋 Энергия полностью восстановлена!`, 'success');
             saveGame();
             updateUI();
         }
@@ -1762,8 +1729,8 @@
                 return;
             }
             
-            const streakDays = 1; // Можно сделать систему стриков
-            const rewardAmount = 100 + (streakDays * 50); // 100 + за каждый день стрика
+            const streakDays = 1;
+            const rewardAmount = 100 + (streakDays * 50);
             
             gameData.visa += rewardAmount;
             gameData.dailyRewardClaimed = true;
@@ -1815,7 +1782,6 @@
                 return;
             }
             
-            // Покупка
             gameData.visa -= upgrade.cost;
             
             switch(type) {
@@ -1849,7 +1815,6 @@
                     break;
             }
             
-            // Сохраняем и обновляем
             saveGame();
             updateUI();
         }
@@ -1903,7 +1868,6 @@
                 gameData.boosts[type].multiplier = multiplier;
             }
             
-            // Добавляем в инвентарь
             let boostName = '';
             switch(type) {
                 case 'click': boostName = 'Буст силы'; break;
@@ -1922,11 +1886,11 @@
         }
 
         function showComingSoon() {
-            showNotify('🚀 Эта функция скоро появится!', 'info');
+            showNotify('🚀 NFT-подарки появятся в ближайшем обновлении!', 'info');
         }
 
         // ======================
-        // МИССИИ
+        // МИССИИ (исправлены)
         // ======================
         function updateMissions() {
             // Клики 100
@@ -1957,19 +1921,37 @@
             document.getElementById('mission2Bar').style.width = mission2Percent + '%';
             document.getElementById('mission3Bar').style.width = mission3Percent + '%';
             
-            // Обновляем кнопки
+            // Обновляем кнопки и статусы
             document.getElementById('mission1Btn').disabled = !gameData.missions.clicks100.completed || gameData.missions.clicks100.claimed;
             document.getElementById('mission2Btn').disabled = !gameData.missions.clicks500.completed || gameData.missions.clicks500.claimed;
             document.getElementById('mission3Btn').disabled = !gameData.missions.clicks1000.completed || gameData.missions.clicks1000.claimed;
             
             if (gameData.missions.clicks100.claimed) {
                 document.getElementById('mission1Btn').textContent = 'ПОЛУЧЕНО';
+                document.getElementById('mission1Btn').disabled = true;
             }
             if (gameData.missions.clicks500.claimed) {
                 document.getElementById('mission2Btn').textContent = 'ПОЛУЧЕНО';
+                document.getElementById('mission2Btn').disabled = true;
             }
             if (gameData.missions.clicks1000.claimed) {
                 document.getElementById('mission3Btn').textContent = 'ПОЛУЧЕНО';
+                document.getElementById('mission3Btn').disabled = true;
+            }
+            
+            // Обновляем статусы Telegram и реакций
+            if (gameData.missions.telegram.claimed) {
+                document.getElementById('telegramStatus').textContent = '✅ ВЫПОЛНЕНО';
+                document.getElementById('telegramStatus').className = 'mission-completed';
+                document.getElementById('telegramBtn').textContent = 'ВЫПОЛНЕНО';
+                document.getElementById('telegramBtn').disabled = true;
+            }
+            
+            if (gameData.missions.reaction.claimed) {
+                document.getElementById('reactionStatus').textContent = '✅ ВЫПОЛНЕНО';
+                document.getElementById('reactionStatus').className = 'mission-completed';
+                document.getElementById('reactionBtn').textContent = 'ВЫПОЛНЕНО';
+                document.getElementById('reactionBtn').disabled = true;
             }
         }
 
@@ -2011,6 +1993,8 @@
             
             document.getElementById('telegramBtn').disabled = true;
             document.getElementById('telegramBtn').textContent = 'ВЫПОЛНЕНО';
+            document.getElementById('telegramStatus').textContent = '✅ ВЫПОЛНЕНО';
+            document.getElementById('telegramStatus').className = 'mission-completed';
             
             showNotify('✅ Подписка на канал подтверждена! +500 VISA', 'success');
             
@@ -2027,6 +2011,8 @@
             
             document.getElementById('reactionBtn').disabled = true;
             document.getElementById('reactionBtn').textContent = 'ВЫПОЛНЕНО';
+            document.getElementById('reactionStatus').textContent = '✅ ВЫПОЛНЕНО';
+            document.getElementById('reactionStatus').className = 'mission-completed';
             
             showNotify('✅ Реакция поставлена! +300 VISA', 'success');
             
@@ -2054,7 +2040,6 @@
             const wheel = document.getElementById('fortuneWheel');
             const spinBtn = document.getElementById('spinBtn');
             
-            // Анимация вращения
             wheel.classList.remove('wheel-spin');
             void wheel.offsetWidth;
             wheel.classList.add('wheel-spin');
@@ -2121,16 +2106,13 @@
                         <div style="font-size: 12px; margin-top: 5px;">Здесь будут отображаться подарки</div>
                     </div>
                 `;
-                document.getElementById('rareItemsCount').textContent = '0';
+                document.getElementById('itemsCount').textContent = '0';
                 return;
             }
             
             grid.innerHTML = '';
-            let rareCount = 0;
             
             gameData.inventory.forEach((item, index) => {
-                if (item.type === 'rare') rareCount++;
-                
                 let icon = '🎁';
                 if (item.type === 'boost') icon = '⚡';
                 if (item.type === 'rare') icon = '👑';
@@ -2158,130 +2140,7 @@
                 grid.appendChild(itemDiv);
             });
             
-            document.getElementById('rareItemsCount').textContent = rareCount;
-        }
-
-        // ======================
-        // ТОП ИГРОКОВ - ИСПРАВЛЕННЫЙ
-        // ======================
-        function loadTopPlayers() {
-            try {
-                const saved = localStorage.getItem('visaclicker_top_players');
-                if (saved) {
-                    topPlayers = JSON.parse(saved);
-                }
-            } catch (e) {
-                console.error('Ошибка загрузки топа:', e);
-            }
-            
-            // Добавляем текущего игрока если его нет
-            const playerExists = topPlayers.some(p => p.name === gameData.username);
-            if (!playerExists) {
-                topPlayers.push({
-                    name: gameData.username,
-                    visa: gameData.visa,
-                    level: gameData.level,
-                    clicks: gameData.totalClicks,
-                    date: new Date().toISOString()
-                });
-            } else {
-                // Обновляем данные текущего игрока
-                const playerIndex = topPlayers.findIndex(p => p.name === gameData.username);
-                if (playerIndex !== -1) {
-                    topPlayers[playerIndex].visa = gameData.visa;
-                    topPlayers[playerIndex].level = gameData.level;
-                    topPlayers[playerIndex].clicks = gameData.totalClicks;
-                    topPlayers[playerIndex].date = new Date().toISOString();
-                }
-            }
-            
-            // Сохраняем обновленный топ
-            saveTopPlayers();
-        }
-
-        function saveTopPlayers() {
-            try {
-                localStorage.setItem('visaclicker_top_players', JSON.stringify(topPlayers));
-            } catch (e) {
-                console.error('Ошибка сохранения топа:', e);
-            }
-        }
-
-        function showTop(type) {
-            loadTopPlayers();
-            const topList = document.getElementById('topList');
-            
-            // Обновляем кнопки
-            document.querySelectorAll('#topScreen .menu-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            let playersToShow = [...topPlayers];
-            
-            if (type === 'daily') {
-                // Топ за день
-                const today = new Date().toDateString();
-                playersToShow = playersToShow.filter(player => 
-                    new Date(player.date).toDateString() === today
-                );
-            } else if (type === 'friends') {
-                // Топ друзей (для примера)
-                playersToShow = playersToShow.slice(0, 5);
-            }
-            
-            // Сортируем по количеству VISA
-            playersToShow.sort((a, b) => b.visa - a.visa);
-            
-            // Показываем топ (максимум 10 игроков)
-            topList.innerHTML = '';
-            
-            if (playersToShow.length === 0) {
-                topList.innerHTML = `
-                    <div style="text-align: center; padding: 40px 0; opacity: 0.5;">
-                        <div style="font-size: 48px; margin-bottom: 20px;">📊</div>
-                        <div>Нет данных</div>
-                        <div style="font-size: 13px; margin-top: 5px;">Будь первым!</div>
-                    </div>
-                `;
-                document.getElementById('playerRank').textContent = '#1';
-                return;
-            }
-            
-            playersToShow.slice(0, 10).forEach((player, index) => {
-                const isCurrent = player.name === gameData.username;
-                const topItem = document.createElement('div');
-                topItem.className = 'mission-item';
-                topItem.style.background = isCurrent ? 'rgba(255,215,0,0.1)' : '';
-                topItem.style.border = isCurrent ? '1px solid #ffd700' : '';
-                
-                let medal = '';
-                if (index === 0) medal = '🥇';
-                else if (index === 1) medal = '🥈';
-                else if (index === 2) medal = '🥉';
-                
-                topItem.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <div style="font-size: 20px; width: 30px;">${medal || '#' + (index + 1)}</div>
-                            <div>
-                                <div style="font-weight: bold; ${isCurrent ? 'color: #ffd700' : ''}">${player.name}</div>
-                                <div style="font-size: 12px; opacity: 0.8;">Уровень ${player.level}</div>
-                            </div>
-                        </div>
-                        <div style="text-align: right;">
-                            <div style="font-weight: bold; color: #ffd700;">${player.visa} VISA</div>
-                            <div style="font-size: 12px; opacity: 0.8;">${player.clicks} кликов</div>
-                        </div>
-                    </div>
-                `;
-                
-                topList.appendChild(topItem);
-            });
-            
-            // Позиция игрока
-            const playerIndex = playersToShow.findIndex(p => p.name === gameData.username);
-            document.getElementById('playerRank').textContent = playerIndex !== -1 ? '#' + (playerIndex + 1) : '#?';
+            document.getElementById('itemsCount').textContent = gameData.inventory.length;
         }
 
         // ======================
@@ -2299,14 +2158,14 @@
         }
 
         // ======================
-        // ВОССТАНОВЛЕНИЕ ЭНЕРГИИ
+        // ВОССТАНОВЛЕНИЕ ЭНЕРГИИ (автоматическое)
         // ======================
         function updateEnergy() {
             const now = Date.now();
-            const timeDiff = (now - gameData.lastEnergyUpdate) / 1000 / 60;
+            const timeDiff = (now - gameData.lastEnergyUpdate) / 1000; // в секундах
             
             if (timeDiff >= 1) {
-                const energyGain = Math.floor(timeDiff * gameData.energyRegen);
+                const energyGain = timeDiff * gameData.energyRegen;
                 if (energyGain > 0) {
                     gameData.energy = Math.min(gameData.maxEnergy, gameData.energy + energyGain);
                     gameData.lastEnergyUpdate = now;
@@ -2327,7 +2186,6 @@
                 }
             });
             
-            // Обновляем инвентарь
             gameData.inventory = gameData.inventory.filter(item => {
                 if (item.type === 'boost' && item.endTime) {
                     return now < item.endTime;
@@ -2346,7 +2204,7 @@
             document.getElementById('displayUsername').textContent = gameData.username;
             
             // Статистика
-            document.getElementById('visaCount').textContent = gameData.visa;
+            document.getElementById('visaCount').textContent = Math.floor(gameData.visa);
             document.getElementById('levelCount').textContent = gameData.level;
             document.getElementById('clicksCount').textContent = gameData.totalClicks;
             document.getElementById('energyCount').textContent = Math.floor(gameData.energy);
@@ -2359,7 +2217,7 @@
             // Энергия
             const energyPercent = (gameData.energy / gameData.maxEnergy) * 100;
             document.getElementById('energyBar').style.width = energyPercent + '%';
-            document.getElementById('energyText').textContent = `${Math.floor(gameData.energy)}/${gameData.maxEnergy}`;
+            document.getElementById('energyText').textContent = `${Math.floor(gameData.energy)}/${Math.floor(gameData.maxEnergy)}`;
             
             // Значения
             let power = gameData.clickPower;
@@ -2379,11 +2237,11 @@
             }
             
             document.getElementById('clickPower').textContent = gameData.clickPower;
-            document.getElementById('maxEnergy').textContent = gameData.maxEnergy;
+            document.getElementById('maxEnergy').textContent = Math.floor(gameData.maxEnergy);
             document.getElementById('giftChanceValue').textContent = (gameData.giftChance * 100).toFixed(2) + '%';
             document.getElementById('energyPerClick').textContent = gameData.energyCost.toFixed(1);
-            document.getElementById('energyRegen').textContent = gameData.energyRegen.toFixed(1);
-            document.getElementById('regenSpeed').textContent = gameData.energyRegen.toFixed(1);
+            document.getElementById('energyRegen').textContent = gameData.energyRegen.toFixed(1) + '/сек';
+            document.getElementById('regenSpeed').textContent = gameData.energyRegen.toFixed(1) + '/сек';
             
             // Кнопки улучшений
             document.getElementById('clickBtn').textContent = gameData.upgrades.click.cost + ' VISA';
@@ -2412,7 +2270,7 @@
         // СМЕНА ЭКРАНОВ
         // ======================
         function showScreen(screen) {
-            const screens = ['clicker', 'missions', 'shop', 'inventory', 'wheel', 'top'];
+            const screens = ['clicker', 'missions', 'shop', 'inventory', 'wheel'];
             
             screens.forEach(s => {
                 const element = document.getElementById(s + 'Screen');
@@ -2434,8 +2292,6 @@
                 updateMissions();
             } else if (screen === 'inventory') {
                 updateInventory();
-            } else if (screen === 'top') {
-                showTop('all');
             }
         }
 
@@ -2469,19 +2325,21 @@
         // ======================
         window.onload = function() {
             loadGame();
-            loadTopPlayers();
+            
+            // Инициализация сложности игры 777
+            updateGame777Difficulty();
             
             updateUI();
             updateMissions();
             updateInventory();
             
-            // Автоматическое обновление
+            // Автоматическое обновление энергии и бустов
             setInterval(() => {
                 updateEnergy();
                 updateBoosts();
                 updateUI();
                 saveGame();
-            }, 30000);
+            }, 1000); // Обновление каждую секунду
             
             // Восстановление колеса каждые 24 часа
             setInterval(() => {
