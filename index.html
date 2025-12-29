@@ -883,7 +883,7 @@
         <div class="egg-content">
             <h2>🥚 ВЫЛУПЛЕНИЕ ПИТОМЦА</h2>
             <div class="egg-animation" id="eggAnimation">🥚</div>
-            <div id="eggResult">
+            <div id="eggResult" style="display: none;">
                 <div id="petResultIcon" style="font-size: 64px;"></div>
                 <div id="petResultName" style="font-size: 24px; font-weight: bold; margin: 10px 0;"></div>
                 <div id="petResultDescription" style="margin: 10px 0;"></div>
@@ -1335,7 +1335,8 @@
             dailyRewardClaimed: false,
             lastBonusTime: 0,
             game777Level: 1,
-            hasEgg: false
+            hasEgg: false,
+            eggBought: false
         };
 
         // Игра 777
@@ -1346,8 +1347,7 @@
             target: 50,
             timeLimit: 10,
             bet: 1000,
-            timer: null,
-            level: 1
+            timer: null
         };
 
         // Головоломка
@@ -1525,8 +1525,8 @@
         // ПОКУПКА ЯЙЦА
         // ======================
         function buyEgg() {
-            if (gameData.hasEgg) {
-                showNotify('🥚 У вас уже есть яйцо!', 'warning');
+            if (gameData.eggBought) {
+                showNotify('🥚 Яйцо уже куплено! Можно купить только одно яйцо.', 'warning');
                 return;
             }
             
@@ -1536,7 +1536,7 @@
             }
             
             gameData.visa -= 1250;
-            gameData.hasEgg = true;
+            gameData.eggBought = true;
             
             // Показываем анимацию вылупления
             hatchEgg();
@@ -1576,6 +1576,11 @@
                     date: new Date().toISOString()
                 });
                 
+                // Автоматически делаем первого питомца активным
+                if (gameData.pets.length === 1) {
+                    gameData.activePet = randomPet.id;
+                }
+                
                 // Показываем результат
                 document.getElementById('eggAnimation').style.display = 'none';
                 document.getElementById('eggResult').style.display = 'block';
@@ -1597,12 +1602,15 @@
                 
                 showNotify(`🥚 Вылупился ${petRarity} питомец: ${randomPet.name}!`, 'success');
                 updatePetsInventory();
+                updatePets();
             }, 3000);
         }
 
         function closeEgg() {
             document.getElementById('eggOverlay').style.display = 'none';
             document.getElementById('eggAnimation').style.display = 'block';
+            document.getElementById('eggResult').style.display = 'none';
+            document.getElementById('closeEggBtn').style.display = 'none';
             updateUI();
         }
 
@@ -1666,10 +1674,207 @@
             updatePets();
             updatePetsInventory();
             saveGame();
+            updateUI();
         }
 
         // ======================
-        // ИГРА 777 - ИСПРАВЛЕННАЯ
+        // ПОДАРКИ
+        // ======================
+        function showGift() {
+            const gift = document.getElementById('gift');
+            gift.style.display = 'flex';
+            gift.style.left = Math.random() * 70 + 15 + '%';
+            gift.style.top = Math.random() * 70 + 15 + '%';
+            
+            showNotify('🎁 Появился РЕДКИЙ подарок! Кликни!', 'warning');
+            
+            setTimeout(() => {
+                if (gift.style.display !== 'none') {
+                    gift.style.display = 'none';
+                    showNotify('Подарок исчез!', 'error');
+                }
+            }, 5000);
+        }
+
+        function collectGift() {
+            const gift = document.getElementById('gift');
+            gift.style.display = 'none';
+            
+            gameData.giftsCollected++;
+            
+            // Тип награды
+            const rand = Math.random();
+            
+            if (rand < 0.85) {
+                // VISA (200-1000)
+                const amount = Math.floor(Math.random() * 800) + 200;
+                if (gameData.boosts.reward.active) {
+                    amount *= gameData.boosts.reward.multiplier;
+                }
+                gameData.visa += amount;
+                showNotify(`🎁 +${amount} VISA! Всего подарков: ${gameData.giftsCollected}`, 'success');
+            } else if (rand < 0.95) {
+                // Редкий предмет
+                const rareItems = [
+                    {name: 'Золотой кликер', value: 500, type: 'rare'},
+                    {name: 'Бриллиантовая энергия', value: 1000, type: 'rare'},
+                    {name: 'Платиновый буст', value: 1500, type: 'rare'}
+                ];
+                const item = rareItems[Math.floor(Math.random() * rareItems.length)];
+                
+                gameData.inventory.push({
+                    name: item.name,
+                    type: item.type,
+                    value: item.value
+                });
+                
+                showNotify(`🎁 Редкий предмет: ${item.name}!`, 'success');
+                updateInventory();
+            } else if (rand < 0.99) {
+                // Буст
+                const boosts = ['Буст силы на 10 мин', 'Буст энергии на 5 мин', 'Буст шанса на 15 мин'];
+                const boostName = boosts[Math.floor(Math.random() * boosts.length)];
+                
+                gameData.inventory.push({
+                    name: boostName,
+                    type: 'boost',
+                    endTime: Date.now() + (10 * 60 * 1000)
+                });
+                
+                showNotify(`🎁 Найден буст: ${boostName}!`, 'success');
+                updateInventory();
+            } else {
+                // Супер редкий
+                const amount = Math.floor(Math.random() * 1000) + 1000;
+                if (gameData.boosts.reward.active) {
+                    amount *= gameData.boosts.reward.multiplier;
+                }
+                gameData.visa += amount;
+                gameData.clickPower += 1;
+                showNotify(`🎁 СУПЕР ПОДАРОК! +${amount} VISA и +1 к силе клика!`, 'success');
+            }
+            
+            saveGame();
+            updateUI();
+        }
+
+        // ======================
+        // ГОЛОВОЛОМКИ
+        // ======================
+        function showPuzzle() {
+            puzzleGame.active = true;
+            puzzleGame.attempts = 3;
+            puzzleGame.selectedTiles = [];
+            
+            const symbols = ['⭐', '🎯', '💰', '⚡', '🎁', '🔋', '👑', '💎', '🚀'];
+            const puzzleSymbols = [];
+            
+            for (let i = 0; i < 3; i++) {
+                puzzleSymbols.push(symbols[Math.floor(Math.random() * symbols.length)]);
+            }
+            
+            const tiles = [...puzzleSymbols, ...puzzleSymbols];
+            while (tiles.length < 9) {
+                tiles.push(symbols[Math.floor(Math.random() * symbols.length)]);
+            }
+            
+            for (let i = tiles.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
+            }
+            
+            puzzleGame.currentPuzzle = {
+                symbols: puzzleSymbols,
+                tiles: tiles
+            };
+            
+            document.getElementById('puzzleOverlay').style.display = 'flex';
+            document.getElementById('puzzleDescription').textContent = 'Найди 3 одинаковых символа!';
+            document.getElementById('puzzleAttempts').textContent = puzzleGame.attempts;
+            document.getElementById('puzzleReward').textContent = '500 VISA + Буст';
+            
+            const grid = document.getElementById('puzzleGrid');
+            grid.innerHTML = '';
+            
+            tiles.forEach((symbol, index) => {
+                const tile = document.createElement('div');
+                tile.className = 'puzzle-tile';
+                tile.textContent = symbol;
+                tile.dataset.index = index;
+                tile.onclick = () => selectPuzzleTile(index);
+                grid.appendChild(tile);
+            });
+            
+            showNotify('🧩 Появилась головоломка! Реши её для награды!', 'warning');
+        }
+
+        function selectPuzzleTile(index) {
+            if (!puzzleGame.active) return;
+            
+            const tile = document.querySelector(`.puzzle-tile[data-index="${index}"]`);
+            
+            if (puzzleGame.selectedTiles.includes(index)) {
+                puzzleGame.selectedTiles = puzzleGame.selectedTiles.filter(i => i !== index);
+                tile.classList.remove('active');
+            } else if (puzzleGame.selectedTiles.length < 3) {
+                puzzleGame.selectedTiles.push(index);
+                tile.classList.add('active');
+            }
+        }
+
+        function checkPuzzle() {
+            if (!puzzleGame.active || puzzleGame.selectedTiles.length !== 3) {
+                showNotify('Выберите 3 тайла!', 'error');
+                return;
+            }
+            
+            puzzleGame.attempts--;
+            document.getElementById('puzzleAttempts').textContent = puzzleGame.attempts;
+            
+            const selectedSymbols = puzzleGame.selectedTiles.map(index => 
+                puzzleGame.currentPuzzle.tiles[index]
+            );
+            
+            const allSame = selectedSymbols.every(symbol => symbol === selectedSymbols[0]);
+            
+            if (allSame) {
+                closePuzzle();
+                
+                const reward = 500 + Math.floor(Math.random() * 500);
+                gameData.visa += reward;
+                gameData.puzzlesCollected++;
+                
+                const boostTypes = ['click', 'chance', 'energy'];
+                const randomBoost = boostTypes[Math.floor(Math.random() * boostTypes.length)];
+                activateBoost(randomBoost, 10 * 60 * 1000, randomBoost === 'click' ? 2 : randomBoost === 'chance' ? 2 : 1);
+                
+                showNotify(`🧩 ГОЛОВОЛОМКА РЕШЕНА! +${reward} VISA и буст!`, 'success');
+            } else {
+                if (puzzleGame.attempts <= 0) {
+                    closePuzzle();
+                    showNotify('🧩 Попытки закончились! Попробуй в другой раз', 'error');
+                } else {
+                    puzzleGame.selectedTiles.forEach(index => {
+                        const tile = document.querySelector(`.puzzle-tile[data-index="${index}"]`);
+                        tile.classList.remove('active');
+                    });
+                    puzzleGame.selectedTiles = [];
+                    showNotify('Неверно! Попробуй еще раз', 'error');
+                }
+            }
+            
+            saveGame();
+            updateUI();
+        }
+
+        function closePuzzle() {
+            document.getElementById('puzzleOverlay').style.display = 'none';
+            puzzleGame.active = false;
+            puzzleGame.selectedTiles = [];
+        }
+
+        // ======================
+        // ИГРА 777
         // ======================
         function setBet(amount) {
             if (game777.active) return;
@@ -1841,19 +2046,657 @@
         }
 
         // ======================
-        // ОСТАЛЬНЫЕ ФУНКЦИИ (без изменений)
+        // БОНУСНЫЕ КНОПКИ
         // ======================
-        // ... (все остальные функции из предыдущего кода остаются без изменений)
-        // Они включают: showGift, collectGift, showPuzzle, selectPuzzleTile, checkPuzzle, closePuzzle,
-        // quickBonus, buyEnergy, dailyReward, specialOffer, buyUpgrade, buyBoost, activateBoost,
-        // showComingSoon, updateMissions, claimMission, completeTelegramMission, completeReactionMission,
-        // spinWheel, updateInventory, levelUp, updateEnergy, updateBoosts, updateUI, showScreen,
-        // saveGame, loadGame
+        function quickBonus() {
+            const now = Date.now();
+            if (now - gameData.lastBonusTime < 60000) {
+                const secondsLeft = Math.ceil((60000 - (now - gameData.lastBonusTime)) / 1000);
+                showNotify(`⏳ Подожди ${secondsLeft} секунд`, 'warning');
+                return;
+            }
+            
+            const bonusAmount = 50 + Math.floor(Math.random() * 150);
+            gameData.visa += bonusAmount;
+            gameData.lastBonusTime = now;
+            
+            showNotify(`⚡ Быстрый бонус: +${bonusAmount} VISA!`, 'success');
+            saveGame();
+            updateUI();
+        }
 
-        // Для экономии места я не дублирую весь код, но убедитесь что все эти функции присутствуют
-        // Они должны быть такими же как в предыдущей версии кода
+        function buyEnergy() {
+            const cost = 500;
+            if (gameData.visa < cost) {
+                showNotify(`❌ Недостаточно VISA! Нужно ${cost}`, 'error');
+                return;
+            }
+            
+            gameData.visa -= cost;
+            gameData.energy = gameData.maxEnergy;
+            
+            showNotify(`🔋 Энергия полностью восстановлена!`, 'success');
+            saveGame();
+            updateUI();
+        }
 
-        // Инициализация
+        function dailyReward() {
+            if (gameData.dailyRewardClaimed) {
+                showNotify('📅 Ежедневная награда уже получена!', 'warning');
+                return;
+            }
+            
+            const streakDays = 1;
+            const rewardAmount = 100 + (streakDays * 50);
+            
+            gameData.visa += rewardAmount;
+            gameData.dailyRewardClaimed = true;
+            
+            showNotify(`📅 Ежедневная награда: +${rewardAmount} VISA! Заходи завтра!`, 'success');
+            saveGame();
+            updateUI();
+        }
+
+        function specialOffer() {
+            const offers = [
+                { name: 'Пакет новичка', visa: 500, energy: 50 },
+                { name: 'Продвинутый набор', visa: 1000, clickPower: 2 },
+                { name: 'Элитный набор', visa: 2000, chance: 0.01 }
+            ];
+            
+            const offer = offers[Math.floor(Math.random() * offers.length)];
+            
+            let cost = 0;
+            if (offer.visa <= 500) cost = 100;
+            else if (offer.visa <= 1000) cost = 250;
+            else cost = 500;
+            
+            if (gameData.visa < cost) {
+                showNotify(`❌ Недостаточно VISA! Нужно ${cost}`, 'error');
+                return;
+            }
+            
+            gameData.visa -= cost;
+            gameData.visa += offer.visa;
+            
+            if (offer.energy) gameData.energy = Math.min(gameData.maxEnergy, gameData.energy + offer.energy);
+            if (offer.clickPower) gameData.clickPower += offer.clickPower;
+            if (offer.chance) gameData.giftChance += offer.chance;
+            
+            showNotify(`💎 ${offer.name}: +${offer.visa} VISA и бонусы!`, 'success');
+            saveGame();
+            updateUI();
+        }
+
+        // ======================
+        // УЛУЧШЕНИЯ
+        // ======================
+        function buyUpgrade(type) {
+            const upgrade = gameData.upgrades[type];
+            
+            if (gameData.visa < upgrade.cost) {
+                showNotify('❌ Недостаточно VISA!', 'error');
+                return;
+            }
+            
+            gameData.visa -= upgrade.cost;
+            
+            switch(type) {
+                case 'click':
+                    gameData.clickPower += 2;
+                    upgrade.level++;
+                    upgrade.cost = Math.floor(upgrade.cost * 1.8);
+                    showNotify('💪 Сила клика увеличена!', 'success');
+                    break;
+                    
+                case 'energy':
+                    gameData.maxEnergy += 20;
+                    gameData.energy = gameData.maxEnergy;
+                    upgrade.level++;
+                    upgrade.cost = Math.floor(upgrade.cost * 1.6);
+                    showNotify('⚡ Макс. энергия увеличена!', 'success');
+                    break;
+                    
+                case 'chance':
+                    gameData.giftChance += 0.002;
+                    upgrade.level++;
+                    upgrade.cost = Math.floor(upgrade.cost * 2.2);
+                    showNotify('🎁 Шанс подарка увеличен!', 'success');
+                    break;
+                    
+                case 'regen':
+                    gameData.energyRegen += 0.5;
+                    upgrade.level++;
+                    upgrade.cost = Math.floor(upgrade.cost * 2.5);
+                    showNotify('🔋 Восстановление энергии ускорено!', 'success');
+                    break;
+            }
+            
+            saveGame();
+            updateUI();
+        }
+
+        // ======================
+        // БУСТЫ ИЗ МАГАЗИНА
+        // ======================
+        function buyBoost(type) {
+            let cost, duration;
+            
+            switch(type) {
+                case 'click':
+                    cost = 1000;
+                    duration = 5 * 60 * 1000;
+                    break;
+                case 'chance':
+                    cost = 2000;
+                    duration = 10 * 60 * 1000;
+                    break;
+                case 'energy':
+                    cost = 3000;
+                    duration = 3 * 60 * 1000;
+                    break;
+                case 'reward':
+                    cost = 5000;
+                    duration = 15 * 60 * 1000;
+                    break;
+            }
+            
+            if (gameData.visa < cost) {
+                showNotify('❌ Недостаточно VISA!', 'error');
+                return;
+            }
+            
+            gameData.visa -= cost;
+            
+            let multiplier = 2;
+            if (type === 'energy') multiplier = 1;
+            
+            activateBoost(type, duration, multiplier);
+            showNotify(`✅ Буст активирован!`, 'success');
+            
+            saveGame();
+            updateUI();
+        }
+
+        function activateBoost(type, duration, multiplier = 1) {
+            gameData.boosts[type].active = true;
+            gameData.boosts[type].endTime = Date.now() + duration;
+            if (multiplier > 1) {
+                gameData.boosts[type].multiplier = multiplier;
+            }
+            
+            let boostName = '';
+            switch(type) {
+                case 'click': boostName = 'Буст силы'; break;
+                case 'chance': boostName = 'Буст шанса'; break;
+                case 'energy': boostName = 'Буст энергии'; break;
+                case 'reward': boostName = 'Буст наград'; break;
+            }
+            
+            gameData.inventory.push({
+                name: boostName,
+                type: 'boost',
+                endTime: Date.now() + duration
+            });
+            
+            updateInventory();
+        }
+
+        function showComingSoon() {
+            showNotify('🚀 NFT-подарки появятся в ближайшем обновлении!', 'info');
+        }
+
+        // ======================
+        // МИССИИ
+        // ======================
+        function updateMissions() {
+            // Клики 100
+            if (gameData.totalClicks >= 100 && !gameData.missions.clicks100.completed) {
+                gameData.missions.clicks100.completed = true;
+            }
+            
+            // Клики 500
+            if (gameData.totalClicks >= 500 && !gameData.missions.clicks500.completed) {
+                gameData.missions.clicks500.completed = true;
+            }
+            
+            // Клики 1000
+            if (gameData.totalClicks >= 1000 && !gameData.missions.clicks1000.completed) {
+                gameData.missions.clicks1000.completed = true;
+            }
+            
+            // Обновляем прогресс
+            document.getElementById('mission1Progress').textContent = Math.min(gameData.totalClicks, 100) + '/100';
+            document.getElementById('mission2Progress').textContent = Math.min(gameData.totalClicks, 500) + '/500';
+            document.getElementById('mission3Progress').textContent = Math.min(gameData.totalClicks, 1000) + '/1000';
+            
+            const mission1Percent = Math.min((gameData.totalClicks / 100) * 100, 100);
+            const mission2Percent = Math.min((gameData.totalClicks / 500) * 100, 100);
+            const mission3Percent = Math.min((gameData.totalClicks / 1000) * 100, 100);
+            
+            document.getElementById('mission1Bar').style.width = mission1Percent + '%';
+            document.getElementById('mission2Bar').style.width = mission2Percent + '%';
+            document.getElementById('mission3Bar').style.width = mission3Percent + '%';
+            
+            // Обновляем кнопки и статусы
+            document.getElementById('mission1Btn').disabled = !gameData.missions.clicks100.completed || gameData.missions.clicks100.claimed;
+            document.getElementById('mission2Btn').disabled = !gameData.missions.clicks500.completed || gameData.missions.clicks500.claimed;
+            document.getElementById('mission3Btn').disabled = !gameData.missions.clicks1000.completed || gameData.missions.clicks1000.claimed;
+            
+            if (gameData.missions.clicks100.claimed) {
+                document.getElementById('mission1Btn').textContent = 'ПОЛУЧЕНО';
+                document.getElementById('mission1Btn').disabled = true;
+            }
+            if (gameData.missions.clicks500.claimed) {
+                document.getElementById('mission2Btn').textContent = 'ПОЛУЧЕНО';
+                document.getElementById('mission2Btn').disabled = true;
+            }
+            if (gameData.missions.clicks1000.claimed) {
+                document.getElementById('mission3Btn').textContent = 'ПОЛУЧЕНО';
+                document.getElementById('mission3Btn').disabled = true;
+            }
+            
+            // Обновляем статусы Telegram и реакций
+            if (gameData.missions.telegram.claimed) {
+                document.getElementById('telegramStatus').textContent = '✅ ВЫПОЛНЕНО';
+                document.getElementById('telegramStatus').className = 'mission-completed';
+                document.getElementById('telegramBtn').textContent = 'ВЫПОЛНЕНО';
+                document.getElementById('telegramBtn').disabled = true;
+            }
+            
+            if (gameData.missions.reaction.claimed) {
+                document.getElementById('reactionStatus').textContent = '✅ ВЫПОЛНЕНО';
+                document.getElementById('reactionStatus').className = 'mission-completed';
+                document.getElementById('reactionBtn').textContent = 'ВЫПОЛНЕНО';
+                document.getElementById('reactionBtn').disabled = true;
+            }
+        }
+
+        function claimMission(missionNum) {
+            let reward;
+            
+            switch(missionNum) {
+                case 1:
+                    if (gameData.missions.clicks100.claimed) return;
+                    reward = 100;
+                    gameData.missions.clicks100.claimed = true;
+                    break;
+                case 2:
+                    if (gameData.missions.clicks500.claimed) return;
+                    reward = 500;
+                    gameData.missions.clicks500.claimed = true;
+                    break;
+                case 3:
+                    if (gameData.missions.clicks1000.claimed) return;
+                    reward = 1000;
+                    gameData.missions.clicks1000.claimed = true;
+                    break;
+            }
+            
+            gameData.visa += reward;
+            showNotify(`🎉 Миссия выполнена! +${reward} VISA`, 'success');
+            
+            saveGame();
+            updateUI();
+            updateMissions();
+        }
+
+        function completeTelegramMission() {
+            if (gameData.missions.telegram.claimed) return;
+            
+            gameData.missions.telegram.completed = true;
+            gameData.missions.telegram.claimed = true;
+            gameData.visa += 500;
+            
+            document.getElementById('telegramBtn').disabled = true;
+            document.getElementById('telegramBtn').textContent = 'ВЫПОЛНЕНО';
+            document.getElementById('telegramStatus').textContent = '✅ ВЫПОЛНЕНО';
+            document.getElementById('telegramStatus').className = 'mission-completed';
+            
+            showNotify('✅ Подписка на канал подтверждена! +500 VISA', 'success');
+            
+            saveGame();
+            updateUI();
+        }
+
+        function completeReactionMission() {
+            if (gameData.missions.reaction.claimed) return;
+            
+            gameData.missions.reaction.completed = true;
+            gameData.missions.reaction.claimed = true;
+            gameData.visa += 300;
+            
+            document.getElementById('reactionBtn').disabled = true;
+            document.getElementById('reactionBtn').textContent = 'ВЫПОЛНЕНО';
+            document.getElementById('reactionStatus').textContent = '✅ ВЫПОЛНЕНО';
+            document.getElementById('reactionStatus').className = 'mission-completed';
+            
+            showNotify('✅ Реакция поставлена! +300 VISA', 'success');
+            
+            saveGame();
+            updateUI();
+        }
+
+        // ======================
+        // КОЛЕСО ФОРТУНЫ
+        // ======================
+        function spinWheel() {
+            if (gameData.wheelAttempts <= 0) {
+                showNotify('❌ Нет попыток! Попробуй завтра', 'error');
+                return;
+            }
+            
+            if (gameData.visa < 100) {
+                showNotify('❌ Недостаточно VISA для спина!', 'error');
+                return;
+            }
+            
+            gameData.visa -= 100;
+            gameData.wheelAttempts--;
+            
+            const wheel = document.getElementById('fortuneWheel');
+            const spinBtn = document.getElementById('spinBtn');
+            
+            wheel.classList.remove('wheel-spin');
+            void wheel.offsetWidth;
+            wheel.classList.add('wheel-spin');
+            
+            spinBtn.disabled = true;
+            spinBtn.textContent = 'ВРАЩАЕТСЯ...';
+            
+            setTimeout(() => {
+                const prizes = [
+                    { type: 'visa', amount: 500, name: '500 VISA' },
+                    { type: 'visa', amount: 1000, name: '1000 VISA' },
+                    { type: 'boost', name: 'Буст силы' },
+                    { type: 'boost', name: 'Буст энергии' },
+                    { type: 'boost', name: 'Буст наград' },
+                    { type: 'rare', name: 'Редкий предмет' }
+                ];
+                
+                const prize = prizes[Math.floor(Math.random() * prizes.length)];
+                
+                if (prize.type === 'visa') {
+                    gameData.visa += prize.amount;
+                    showNotify(`🎡 Поздравляем! Вы выиграли ${prize.name}!`, 'success');
+                } else if (prize.type === 'boost') {
+                    gameData.inventory.push({
+                        name: prize.name,
+                        type: 'boost',
+                        endTime: Date.now() + (30 * 60 * 1000)
+                    });
+                    showNotify(`🎡 Поздравляем! Вы выиграли ${prize.name}!`, 'success');
+                    updateInventory();
+                } else {
+                    gameData.inventory.push({
+                        name: 'Редкий предмет с колеса',
+                        type: 'rare',
+                        value: 1000
+                    });
+                    showNotify(`🎡 УДАЧА! Вы выиграли редкий предмет!`, 'success');
+                    updateInventory();
+                }
+                
+                wheel.classList.remove('wheel-spin');
+                spinBtn.disabled = false;
+                spinBtn.textContent = `КРУТИТЬ (100 VISA)`;
+                
+                document.getElementById('wheelAttempts').textContent = gameData.wheelAttempts;
+                
+                saveGame();
+                updateUI();
+                
+            }, 5000);
+        }
+
+        // ======================
+        // ИНВЕНТАРЬ
+        // ======================
+        function updateInventory() {
+            const grid = document.getElementById('inventoryGrid');
+            
+            const allItems = [...gameData.inventory];
+            
+            if (allItems.length === 0) {
+                grid.innerHTML = `
+                    <div class="inventory-item" id="emptyInventory" style="grid-column: span 3; padding: 40px; text-align: center; opacity: 0.5;">
+                        <div class="inventory-icon">📦</div>
+                        <div>Инвентарь пуст</div>
+                        <div style="font-size: 12px; margin-top: 5px;">Здесь будут отображаться подарки</div>
+                    </div>
+                `;
+                document.getElementById('itemsCount').textContent = '0';
+                return;
+            }
+            
+            grid.innerHTML = '';
+            
+            allItems.forEach((item, index) => {
+                let icon = '🎁';
+                if (item.type === 'boost') icon = '⚡';
+                if (item.type === 'rare') icon = '👑';
+                
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'inventory-item';
+                
+                let timeLeft = '';
+                if (item.endTime) {
+                    const remaining = item.endTime - Date.now();
+                    if (remaining > 0) {
+                        const minutes = Math.floor(remaining / 60000);
+                        timeLeft = `${minutes} мин`;
+                    }
+                }
+                
+                itemDiv.innerHTML = `
+                    <div class="inventory-icon">${icon}</div>
+                    <div style="font-weight: bold; font-size: 14px;">${item.name}</div>
+                    ${timeLeft ? `<div style="font-size: 10px; color: #00ff88;">${timeLeft}</div>` : 
+                      item.value ? `<div style="font-size: 12px; opacity: 0.8;">${item.value} VISA</div>` : 
+                      '<div style="font-size: 12px; opacity: 0.8;">Особый</div>'}
+                `;
+                
+                grid.appendChild(itemDiv);
+            });
+            
+            document.getElementById('itemsCount').textContent = allItems.length;
+        }
+
+        // ======================
+        // УРОВЕНЬ
+        // ======================
+        function levelUp() {
+            gameData.level++;
+            gameData.xp = 0;
+            gameData.xpNeeded = Math.floor(gameData.xpNeeded * 1.3);
+            
+            const levelReward = gameData.level * 100;
+            gameData.visa += levelReward;
+            
+            showNotify(`🎉 Уровень ${gameData.level}! +${levelReward} VISA`, 'success');
+        }
+
+        // ======================
+        // ВОССТАНОВЛЕНИЕ ЭНЕРГИИ
+        // ======================
+        function updateEnergy() {
+            const now = Date.now();
+            const timeDiff = (now - gameData.lastEnergyUpdate) / 1000; // в секундах
+            
+            if (timeDiff >= 1) {
+                const energyGain = timeDiff * gameData.energyRegen;
+                if (energyGain > 0) {
+                    gameData.energy = Math.min(gameData.maxEnergy, gameData.energy + energyGain);
+                    gameData.lastEnergyUpdate = now;
+                }
+            }
+        }
+
+        // ======================
+        // ОБНОВЛЕНИЕ БУСТОВ
+        // ======================
+        function updateBoosts() {
+            const now = Date.now();
+            
+            Object.keys(gameData.boosts).forEach(key => {
+                if (gameData.boosts[key].active && now >= gameData.boosts[key].endTime) {
+                    gameData.boosts[key].active = false;
+                    showNotify(`⏰ Буст "${key}" закончился`, 'warning');
+                }
+            });
+            
+            gameData.inventory = gameData.inventory.filter(item => {
+                if (item.type === 'boost' && item.endTime) {
+                    return now < item.endTime;
+                }
+                return true;
+            });
+            
+            updateInventory();
+        }
+
+        // ======================
+        // ОБНОВЛЕНИЕ ИНТЕРФЕЙСА
+        // ======================
+        function updateUI() {
+            // Никнейм
+            document.getElementById('displayUsername').textContent = gameData.username;
+            
+            // Статистика
+            document.getElementById('visaCount').textContent = Math.floor(gameData.visa);
+            document.getElementById('levelCount').textContent = gameData.level;
+            document.getElementById('clicksCount').textContent = gameData.totalClicks;
+            document.getElementById('energyCount').textContent = Math.floor(gameData.energy);
+            
+            // Прогресс
+            const xpPercent = (gameData.xp / gameData.xpNeeded) * 100;
+            document.getElementById('xpBar').style.width = xpPercent + '%';
+            document.getElementById('xpText').textContent = `${Math.floor(gameData.xp)}/${gameData.xpNeeded}`;
+            
+            // Энергия
+            const energyPercent = (gameData.energy / gameData.maxEnergy) * 100;
+            document.getElementById('energyBar').style.width = energyPercent + '%';
+            document.getElementById('energyText').textContent = `${Math.floor(gameData.energy)}/${Math.floor(gameData.maxEnergy)}`;
+            
+            // Значения
+            let power = gameData.clickPower;
+            if (gameData.boosts.click.active) {
+                power *= gameData.boosts.click.multiplier;
+                document.getElementById('powerValue').innerHTML = `x${power} <span style="color:#00ff88; font-size:12px;">(БУСТ!)</span>`;
+            } else {
+                document.getElementById('powerValue').textContent = `x${power}`;
+            }
+            
+            let chance = gameData.giftChance * 100;
+            if (gameData.boosts.chance.active) {
+                chance *= gameData.boosts.chance.multiplier;
+                document.getElementById('chanceValue').innerHTML = `${chance.toFixed(2)}% <span style="color:#00ff88; font-size:12px;">(БУСТ!)</span>`;
+            } else {
+                document.getElementById('chanceValue').textContent = `${chance.toFixed(2)}%`;
+            }
+            
+            document.getElementById('clickPower').textContent = gameData.clickPower;
+            document.getElementById('maxEnergy').textContent = Math.floor(gameData.maxEnergy);
+            document.getElementById('giftChanceValue').textContent = (gameData.giftChance * 100).toFixed(2) + '%';
+            document.getElementById('energyPerClick').textContent = gameData.energyCost.toFixed(1);
+            document.getElementById('energyRegen').textContent = gameData.energyRegen.toFixed(1) + '/сек';
+            document.getElementById('regenSpeed').textContent = gameData.energyRegen.toFixed(1) + '/сек';
+            
+            // Кнопки улучшений
+            document.getElementById('clickBtn').textContent = gameData.upgrades.click.cost + ' VISA';
+            document.getElementById('energyBtn').textContent = gameData.upgrades.energy.cost + ' VISA';
+            document.getElementById('chanceBtn').textContent = gameData.upgrades.chance.cost + ' VISA';
+            document.getElementById('regenBtn').textContent = gameData.upgrades.regen.cost + ' VISA';
+            
+            // Проверка возможности покупки
+            document.getElementById('clickBtn').disabled = gameData.visa < gameData.upgrades.click.cost;
+            document.getElementById('energyBtn').disabled = gameData.visa < gameData.upgrades.energy.cost;
+            document.getElementById('chanceBtn').disabled = gameData.visa < gameData.upgrades.chance.cost;
+            document.getElementById('regenBtn').disabled = gameData.visa < gameData.upgrades.regen.cost;
+            
+            // Проверка ставки для игры 777
+            const start777Btn = document.getElementById('start777Btn');
+            if (gameData.visa < game777.bet) {
+                start777Btn.disabled = true;
+                start777Btn.style.opacity = '0.5';
+            } else {
+                start777Btn.disabled = false;
+                start777Btn.style.opacity = '1';
+            }
+            
+            // Проверка яйца
+            const eggBtn = document.getElementById('eggBtn');
+            if (gameData.eggBought) {
+                eggBtn.disabled = true;
+                eggBtn.textContent = 'КУПЛЕНО';
+                eggBtn.style.background = '#666';
+            } else if (gameData.visa < 1250) {
+                eggBtn.disabled = true;
+                eggBtn.style.opacity = '0.5';
+            } else {
+                eggBtn.disabled = false;
+                eggBtn.style.opacity = '1';
+            }
+        }
+
+        // ======================
+        // СМЕНА ЭКРАНОВ
+        // ======================
+        function showScreen(screen) {
+            const screens = ['clicker', 'missions', 'shop', 'inventory', 'wheel'];
+            
+            screens.forEach(s => {
+                const element = document.getElementById(s + 'Screen');
+                if (element) element.style.display = 'none';
+            });
+            
+            document.querySelectorAll('.menu-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            document.getElementById(screen + 'Screen').style.display = 'block';
+            
+            const btnIndex = screens.indexOf(screen);
+            document.querySelectorAll('.menu-btn')[btnIndex].classList.add('active');
+            
+            if (screen === 'clicker') {
+                updateUI();
+            } else if (screen === 'missions') {
+                updateMissions();
+            } else if (screen === 'inventory') {
+                updateInventory();
+                updatePetsInventory();
+            }
+        }
+
+        // ======================
+        // СОХРАНЕНИЕ/ЗАГРУЗКА
+        // ======================
+        function saveGame() {
+            try {
+                localStorage.setItem('visaclicker_game_data', JSON.stringify(gameData));
+            } catch (e) {
+                console.error('Ошибка сохранения:', e);
+            }
+        }
+
+        function loadGame() {
+            try {
+                const saved = localStorage.getItem('visaclicker_game_data');
+                if (saved) {
+                    const loaded = JSON.parse(saved);
+                    gameData = { ...gameData, ...loaded };
+                    return true;
+                }
+            } catch (e) {
+                console.error('Ошибка загрузки:', e);
+            }
+            return false;
+        }
+
+        // ======================
+        // ИНИЦИАЛИЗАЦИЯ
+        // ======================
         window.onload = function() {
             loadGame();
             
