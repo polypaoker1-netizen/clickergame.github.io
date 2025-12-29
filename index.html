@@ -75,6 +75,7 @@
             font-weight: bold;
             cursor: pointer;
             margin-top: 10px;
+            transition: background 0.3s;
         }
         
         .modal-btn:hover {
@@ -218,11 +219,16 @@
             color: white;
             font-weight: bold;
             cursor: pointer;
+            transition: background 0.3s;
         }
         
         .upgrade-btn:disabled {
             background: #666;
             cursor: not-allowed;
+        }
+        
+        .upgrade-btn:hover:not(:disabled) {
+            background: #ff6b6b;
         }
         
         /* Нижнее меню */
@@ -251,6 +257,11 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            transition: background 0.3s;
+        }
+        
+        .menu-btn:hover {
+            background: rgba(255,255,255,0.3);
         }
         
         .menu-btn.active {
@@ -288,6 +299,28 @@
             50% { transform: translateY(-15px); }
         }
         
+        /* Головоломка */
+        .puzzle {
+            position: fixed;
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, #00ff88, #00ccff);
+            border-radius: 20px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            cursor: pointer;
+            z-index: 100;
+            box-shadow: 0 0 30px #00ff88;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
         /* Уведомление */
         .notification {
             position: fixed;
@@ -301,6 +334,7 @@
             animation: slideIn 0.3s;
             display: none;
             font-weight: bold;
+            max-width: 300px;
         }
         
         @keyframes slideIn {
@@ -337,7 +371,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.95);
             display: none;
             align-items: center;
             justify-content: center;
@@ -362,6 +396,129 @@
             position: absolute;
             cursor: pointer;
             box-shadow: 0 0 20px #00ff88;
+        }
+        
+        /* Головоломки */
+        .puzzle-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        
+        .puzzle-content {
+            background: #1a1a2e;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            width: 90%;
+            max-width: 450px;
+            border: 3px solid #ffd700;
+        }
+        
+        /* Пазл */
+        .puzzle-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            margin: 20px auto;
+            max-width: 300px;
+        }
+        
+        .puzzle-piece {
+            width: 80px;
+            height: 80px;
+            background: #e94560;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        
+        .puzzle-piece:hover {
+            transform: scale(1.05);
+        }
+        
+        .puzzle-piece.correct {
+            background: #00ff88;
+        }
+        
+        .puzzle-piece.wrong {
+            background: #ff3838;
+        }
+        
+        /* Запомни последовательность */
+        .sequence-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 20px auto;
+            max-width: 300px;
+        }
+        
+        .sequence-tile {
+            width: 60px;
+            height: 60px;
+            background: #0f3460;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .sequence-tile.active {
+            background: #e94560;
+        }
+        
+        .sequence-tile.correct {
+            background: #00ff88;
+        }
+        
+        .sequence-tile.wrong {
+            background: #ff3838;
+        }
+        
+        /* Найди отличия */
+        .difference-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 20px auto;
+        }
+        
+        .difference-image {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            background: #0f3460;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .difference-dot {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #ffd700;
+            border-radius: 50%;
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+        }
+        
+        .difference-dot.found {
+            background: #00ff88;
         }
         
         /* Ежедневка */
@@ -437,8 +594,18 @@
         </div>
     </div>
     
+    <!-- Головоломки -->
+    <div id="puzzleOverlay" class="puzzle-overlay">
+        <div class="puzzle-content" id="puzzleContent">
+            <!-- Контент будет генерироваться динамически -->
+        </div>
+    </div>
+    
     <!-- Подарок -->
-    <div class="gift" id="gift" onclick="collectGift()">🎁</div>
+    <div class="gift" id="gift" onclick="collectReward('gift')">🎁</div>
+    
+    <!-- Головоломка -->
+    <div class="puzzle" id="puzzle" onclick="collectReward('puzzle')">🧩</div>
     
     <!-- Уведомление -->
     <div class="notification" id="notification"></div>
@@ -470,8 +637,8 @@
                     <div class="stat-value" id="clicksCount">0</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">ПОДАРКОВ</div>
-                    <div class="stat-value" id="giftsCount">0</div>
+                    <div class="stat-label">ГОЛОВОЛОМКИ</div>
+                    <div class="stat-value" id="puzzlesCount">0</div>
                 </div>
             </div>
             
@@ -505,6 +672,7 @@
                 <div class="click-info">
                     <div>Сила клика: <span id="powerValue" style="color: #00ff88;">x5</span></div>
                     <div>Шанс подарка: <span id="chanceValue" style="color: gold;">0.5%</span></div>
+                    <div>Шанс головоломки: <span id="puzzleChanceValue" style="color: #00ccff;">0.2%</span></div>
                     <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;" id="multiplierText"></div>
                 </div>
             </div>
@@ -539,6 +707,15 @@
                         1200 VISA
                     </button>
                 </div>
+                <div class="upgrade-item">
+                    <div>
+                        <div style="font-weight: bold;">🧩 Шанс головоломки</div>
+                        <div style="font-size: 12px;">Текущий: <span id="puzzleUpgradeChance">0.2%</span></div>
+                    </div>
+                    <button class="upgrade-btn" onclick="buyUpgrade('puzzle')" id="puzzleBtn">
+                        1500 VISA
+                    </button>
+                </div>
             </div>
         </div>
         
@@ -561,14 +738,14 @@
                 
                 <div class="mission-item">
                     <div style="display: flex; justify-content: space-between;">
-                        <span>Купи 5 улучшений</span>
-                        <span id="missionUpgrades">0/5</span>
+                        <span>Реши 5 головоломок</span>
+                        <span id="missionPuzzles">0/5</span>
                     </div>
                     <div class="mission-progress">
-                        <div class="mission-progress-fill" id="missionUpgradesBar" style="width: 0%"></div>
+                        <div class="mission-progress-fill" id="missionPuzzlesBar" style="width: 0%"></div>
                     </div>
-                    <button class="upgrade-btn" onclick="claimMission('upgrades')" id="missionUpgradesBtn" disabled style="width: 100%; margin-top: 8px;">
-                        Забрать 1000 VISA
+                    <button class="upgrade-btn" onclick="claimMission('puzzles')" id="missionPuzzlesBtn" disabled style="width: 100%; margin-top: 8px;">
+                        Забрать 1500 VISA
                     </button>
                 </div>
                 
@@ -670,13 +847,13 @@
                 </div>
                 
                 <div class="boost-item">
-                    <div style="font-size: 24px;">♾️</div>
+                    <div style="font-size: 24px;">🧩</div>
                     <div>
-                        <div style="font-weight: bold;">Беск. энергия на 1 мин</div>
-                        <div style="font-size: 12px; opacity: 0.8;">Кликай без ограничений по энергии</div>
+                        <div style="font-weight: bold;">x3 Шанса головоломки</div>
+                        <div style="font-size: 12px; opacity: 0.8;">Увеличивает шанс выпадения головоломок</div>
                     </div>
-                    <button class="upgrade-btn" onclick="buyBoost('energy')" style="margin-left: auto;">
-                        5000 VISA
+                    <button class="upgrade-btn" onclick="buyBoost('puzzle')" style="margin-left: auto;">
+                        2500 VISA
                     </button>
                 </div>
             </div>
@@ -731,32 +908,36 @@
             energy: 50,
             maxEnergy: 50,
             totalClicks: 0,
-            gifts: 0,
+            giftsCollected: 0,
+            puzzlesSolved: 0,
             clickPower: 5,
             giftChance: 0.005,
+            puzzleChance: 0.002,
             upgrades: {
                 click: { level: 1, cost: 500 },
                 energy: { level: 1, cost: 800 },
-                chance: { level: 1, cost: 1200 }
+                chance: { level: 1, cost: 1200 },
+                puzzle: { level: 1, cost: 1500 }
             },
             boosts: {
                 click: { active: false, endTime: 0, multiplier: 2 },
                 chance: { active: false, endTime: 0, multiplier: 2 },
-                energy: { active: false, endTime: 0 }
+                energy: { active: false, endTime: 0 },
+                puzzle: { active: false, endTime: 0, multiplier: 3 }
             },
             missions: {
                 clicks: { current: 0, target: 1000, completed: false, reward: 500 },
-                upgrades: { current: 0, target: 5, completed: false, reward: 1000 },
+                puzzles: { current: 0, target: 5, completed: false, reward: 1500 },
                 gifts: { current: 0, target: 10, completed: false, reward: 2000 }
             },
             daily: {
                 streak: 0,
                 lastClaim: 0,
-                claimed: [false, false, false, false, false, false, false]
+                claimed: [false, false, false]
             },
             minigame: {
                 lastPlayed: 0,
-                cooldown: 600000 // 10 минут
+                cooldown: 600000
             },
             lastEnergyUpdate: Date.now()
         };
@@ -770,11 +951,22 @@
             interval: null
         };
         
+        // Головоломки
+        let currentPuzzle = {
+            type: '',
+            data: null,
+            solved: false,
+            timer: null,
+            timeLeft: 30
+        };
+        
         // Уведомления
         function showNotify(text, type = 'info') {
             const notification = document.getElementById('notification');
             notification.textContent = text;
-            notification.style.background = type === 'error' ? '#ff3838' : '#e94560';
+            notification.style.background = type === 'error' ? '#ff3838' : 
+                                          type === 'success' ? '#00ff88' : 
+                                          type === 'warning' ? '#ffd700' : '#e94560';
             notification.style.display = 'block';
             
             setTimeout(() => {
@@ -782,44 +974,43 @@
             }, 3000);
         }
         
-        // Регистрация пользователя (ИСПРАВЛЕННАЯ!)
+        // РЕГИСТРАЦИЯ ПОЛЬЗОВАТЕЛЯ - ИСПРАВЛЕННАЯ
         function registerUser() {
             const usernameInput = document.getElementById('usernameInput');
             const username = usernameInput.value.trim();
             const errorDiv = document.getElementById('usernameError');
             const registerBtn = document.getElementById('registerBtn');
             
+            // Сброс ошибок
             errorDiv.style.display = 'none';
-            registerBtn.disabled = true;
-            registerBtn.textContent = 'ЗАГРУЗКА...';
             
-            // Проверки
-            if(!username) {
+            // Проверка ника
+            if (!username) {
                 errorDiv.textContent = 'Введи никнейм!';
                 errorDiv.style.display = 'block';
                 usernameInput.focus();
-                registerBtn.disabled = false;
-                registerBtn.textContent = 'НАЧАТЬ ИГРАТЬ';
                 return;
             }
             
-            if(username.length < 3) {
+            if (username.length < 3) {
                 errorDiv.textContent = 'Ник должен быть от 3 символов';
                 errorDiv.style.display = 'block';
-                registerBtn.disabled = false;
-                registerBtn.textContent = 'НАЧАТЬ ИГРАТЬ';
+                usernameInput.focus();
                 return;
             }
             
-            // Задержка для имитации загрузки
+            // Блокируем кнопку на время обработки
+            registerBtn.disabled = true;
+            registerBtn.textContent = 'ЗАГРУЗКА...';
+            
+            // Сохраняем ник
+            gameData.username = username;
+            
+            // Сохраняем в localStorage
+            localStorage.setItem('visaclicker_current_user', JSON.stringify(gameData));
+            
+            // Скрываем модалку и показываем игру
             setTimeout(() => {
-                // Сохраняем
-                gameData.username = username;
-                
-                // Сохраняем в localStorage
-                localStorage.setItem('visaclicker_current_user', JSON.stringify(gameData));
-                
-                // Скрываем модалку, показываем игру
                 document.getElementById('loginModal').style.display = 'none';
                 document.getElementById('gameInterface').style.display = 'block';
                 showScreen('clicker');
@@ -828,8 +1019,9 @@
                 updateUI();
                 updateDailyStatus();
                 
-                showNotify(`Добро пожаловать, ${username}!`);
+                showNotify(`Добро пожаловать, ${username}! 🎮`, 'success');
                 
+                // Восстанавливаем кнопку
                 registerBtn.disabled = false;
                 registerBtn.textContent = 'НАЧАТЬ ИГРАТЬ';
             }, 500);
@@ -842,7 +1034,7 @@
                 return;
             }
             
-            // Анимация
+            // Анимация клика
             const clickArea = document.getElementById('clickArea');
             clickArea.style.transform = 'scale(0.95)';
             setTimeout(() => clickArea.style.transform = 'scale(1)', 100);
@@ -869,7 +1061,7 @@
                 updateMissions();
             }
             
-            // Проверка мини-игры (каждые 50 кликов)
+            // Проверка мини-игры
             if(gameData.totalClicks % 50 === 0) {
                 checkMinigame();
             }
@@ -879,7 +1071,7 @@
                 gameData.level++;
                 gameData.xp = 0;
                 gameData.xpNeeded = Math.floor(gameData.xpNeeded * 1.5);
-                showNotify(`🎉 Уровень ${gameData.level}!`);
+                showNotify(`🎉 Уровень ${gameData.level}!`, 'success');
             }
             
             // Шанс подарка с бустом
@@ -888,114 +1080,21 @@
                 giftChance *= gameData.boosts.chance.multiplier;
             }
             
-            if(Math.random() < giftChance) {
+            // Шанс головоломки с бустом
+            let puzzleChance = gameData.puzzleChance;
+            if(gameData.boosts.puzzle.active) {
+                puzzleChance *= gameData.boosts.puzzle.multiplier;
+            }
+            
+            // Проверяем выпадение (сначала головоломка, потом подарок)
+            const rand = Math.random();
+            if(rand < puzzleChance) {
+                showPuzzle();
+            } else if(rand < giftChance + puzzleChance) {
                 showGift();
             }
             
-            // Сохраняем
-            saveGame();
-            updateUI();
-        }
-        
-        // Проверка мини-игры
-        function checkMinigame() {
-            const now = Date.now();
-            const timeSinceLast = now - gameData.minigame.lastPlayed;
-            
-            if(timeSinceLast > gameData.minigame.cooldown && Math.random() < 0.3) {
-                startMinigame();
-            }
-        }
-        
-        // Старт мини-игры
-        function startMinigame() {
-            minigame.active = true;
-            minigame.time = 10;
-            minigame.score = 0;
-            minigame.targets = [];
-            
-            gameData.minigame.lastPlayed = Date.now();
-            
-            document.getElementById('minigameOverlay').style.display = 'flex';
-            document.getElementById('minigameTimer').textContent = minigame.time;
-            document.getElementById('minigameScore').textContent = minigame.score;
-            document.getElementById('minigameCloseBtn').style.display = 'none';
-            
-            // Создаем цели
-            createMinigameTarget();
-            
-            // Таймер
-            minigame.interval = setInterval(() => {
-                minigame.time--;
-                document.getElementById('minigameTimer').textContent = minigame.time;
-                
-                if(minigame.time <= 0) {
-                    endMinigame();
-                }
-            }, 1000);
-        }
-        
-        // Создание цели
-        function createMinigameTarget() {
-            const area = document.getElementById('minigameArea');
-            
-            // Очищаем старые цели
-            minigame.targets.forEach(target => target.remove());
-            minigame.targets = [];
-            
-            // Создаем 5 целей
-            for(let i = 0; i < 5; i++) {
-                const target = document.createElement('div');
-                target.className = 'minigame-target';
-                target.style.left = Math.random() * (area.offsetWidth - 60) + 'px';
-                target.style.top = Math.random() * (area.offsetHeight - 60) + 'px';
-                target.onclick = () => hitMinigameTarget(target);
-                
-                area.appendChild(target);
-                minigame.targets.push(target);
-            }
-        }
-        
-        // Попадание по цели
-        function hitMinigameTarget(target) {
-            minigame.score++;
-            document.getElementById('minigameScore').textContent = minigame.score;
-            
-            // Удаляем цель
-            target.remove();
-            
-            // Создаем новую
-            setTimeout(() => {
-                if(minigame.active) {
-                    const area = document.getElementById('minigameArea');
-                    const newTarget = document.createElement('div');
-                    newTarget.className = 'minigame-target';
-                    newTarget.style.left = Math.random() * (area.offsetWidth - 60) + 'px';
-                    newTarget.style.top = Math.random() * (area.offsetHeight - 60) + 'px';
-                    newTarget.onclick = () => hitMinigameTarget(newTarget);
-                    
-                    area.appendChild(newTarget);
-                    minigame.targets.push(newTarget);
-                }
-            }, 200);
-        }
-        
-        // Завершение мини-игры
-        function endMinigame() {
-            minigame.active = false;
-            clearInterval(minigame.interval);
-            
-            const reward = minigame.score * 10;
-            gameData.visa += reward;
-            
-            document.getElementById('minigameText').textContent = `Игра окончена! Ты набрал ${minigame.score} очков!`;
-            document.getElementById('minigameCloseBtn').style.display = 'block';
-            document.getElementById('minigameCloseBtn').textContent = `ЗАБРАТЬ ${reward} VISA`;
-            
-            // Очищаем цели
-            minigame.targets.forEach(target => target.remove());
-            minigame.targets = [];
-            
+            // Сохраняем и обновляем
             saveGame();
             updateUI();
         }
@@ -1007,50 +1106,408 @@
             gift.style.left = Math.random() * 70 + 15 + '%';
             gift.style.top = Math.random() * 70 + 15 + '%';
             
-            showNotify('🎁 Появился подарок! Кликни!');
+            showNotify('🎁 Появился подарок! Кликни!', 'warning');
             
             setTimeout(() => {
                 if(gift.style.display !== 'none') {
                     gift.style.display = 'none';
                     showNotify('Подарок исчез!', 'error');
                 }
-            }, 4000);
+            }, 5000);
         }
         
-        // Собрать подарок
-        function collectGift() {
-            const gift = document.getElementById('gift');
-            gift.style.display = 'none';
+        // Показать головоломку
+        function showPuzzle() {
+            const puzzle = document.getElementById('puzzle');
+            puzzle.style.display = 'flex';
+            puzzle.style.left = Math.random() * 70 + 15 + '%';
+            puzzle.style.top = Math.random() * 70 + 15 + '%';
             
-            // Тип награды
-            const rand = Math.random();
+            showNotify('🧩 Появилась головоломка! Кликни для решения!', 'warning');
             
-            if(rand < 0.7) {
-                // VISA
+            setTimeout(() => {
+                if(puzzle.style.display !== 'none') {
+                    puzzle.style.display = 'none';
+                    showNotify('Головоломка исчезла!', 'error');
+                }
+            }, 7000);
+        }
+        
+        // Собрать награду
+        function collectReward(type) {
+            if(type === 'gift') {
+                const gift = document.getElementById('gift');
+                gift.style.display = 'none';
+                
+                // Награда за подарок
                 const amount = Math.floor(Math.random() * 100) + 50;
                 gameData.visa += amount;
-                showNotify(`🎁 +${amount} VISA!`);
-            } else if(rand < 0.9) {
-                // Улучшение
-                gameData.clickPower++;
-                showNotify(`🎁 Сила клика +1!`);
-            } else {
-                // Предмет
-                gameData.gifts++;
-                showNotify(`🎁 Редкий предмет! Всего: ${gameData.gifts}`);
+                gameData.giftsCollected++;
+                
+                showNotify(`🎁 +${amount} VISA! Всего подарков: ${gameData.giftsCollected}`, 'success');
                 
                 // Прогресс миссии
                 if(gameData.missions.gifts.current < gameData.missions.gifts.target) {
                     gameData.missions.gifts.current++;
                     updateMissions();
                 }
+            } else if(type === 'puzzle') {
+                const puzzle = document.getElementById('puzzle');
+                puzzle.style.display = 'none';
+                
+                // Запускаем случайную головоломку
+                startRandomPuzzle();
             }
             
             saveGame();
             updateUI();
         }
         
-        // Покупка улучшения
+        // Запуск случайной головоломки
+        function startRandomPuzzle() {
+            const puzzles = ['sequence', 'puzzle', 'difference'];
+            const randomPuzzle = puzzles[Math.floor(Math.random() * puzzles.length)];
+            
+            currentPuzzle.type = randomPuzzle;
+            currentPuzzle.solved = false;
+            currentPuzzle.timeLeft = 30;
+            
+            document.getElementById('puzzleOverlay').style.display = 'flex';
+            
+            switch(randomPuzzle) {
+                case 'sequence':
+                    createSequencePuzzle();
+                    break;
+                case 'puzzle':
+                    createPuzzlePuzzle();
+                    break;
+                case 'difference':
+                    createDifferencePuzzle();
+                    break;
+            }
+            
+            // Таймер
+            startPuzzleTimer();
+        }
+        
+        // Таймер головоломки
+        function startPuzzleTimer() {
+            if(currentPuzzle.timer) clearInterval(currentPuzzle.timer);
+            
+            currentPuzzle.timer = setInterval(() => {
+                currentPuzzle.timeLeft--;
+                document.getElementById('puzzleTimer').textContent = currentPuzzle.timeLeft;
+                
+                if(currentPuzzle.timeLeft <= 0) {
+                    endPuzzle(false);
+                }
+            }, 1000);
+        }
+        
+        // Головоломка "Запомни последовательность"
+        function createSequencePuzzle() {
+            const content = document.getElementById('puzzleContent');
+            content.innerHTML = `
+                <h2>🧩 Запомни последовательность!</h2>
+                <p>Запомни порядок мигающих клеток и повтори!</p>
+                <p>Время: <span id="puzzleTimer">30</span>с</p>
+                <div class="sequence-grid" id="sequenceGrid"></div>
+                <div style="margin-top: 20px;">
+                    <button class="modal-btn" onclick="startSequenceGame()" id="startSequenceBtn">
+                        НАЧАТЬ
+                    </button>
+                </div>
+            `;
+            
+            const grid = document.getElementById('sequenceGrid');
+            grid.innerHTML = '';
+            
+            // Создаем 12 клеток
+            for(let i = 0; i < 12; i++) {
+                const tile = document.createElement('div');
+                tile.className = 'sequence-tile';
+                tile.dataset.index = i;
+                tile.textContent = i + 1;
+                grid.appendChild(tile);
+            }
+            
+            currentPuzzle.data = {
+                sequence: [],
+                playerSequence: [],
+                showingSequence: false,
+                sequenceLength: 4
+            };
+            
+            // Генерируем случайную последовательность
+            for(let i = 0; i < currentPuzzle.data.sequenceLength; i++) {
+                currentPuzzle.data.sequence.push(Math.floor(Math.random() * 12));
+            }
+        }
+        
+        function startSequenceGame() {
+            const btn = document.getElementById('startSequenceBtn');
+            btn.disabled = true;
+            btn.textContent = 'СМОТРИ...';
+            
+            currentPuzzle.data.showingSequence = true;
+            currentPuzzle.data.playerSequence = [];
+            
+            // Показываем последовательность
+            let delay = 0;
+            currentPuzzle.data.sequence.forEach((tileIndex, i) => {
+                setTimeout(() => {
+                    const tile = document.querySelector(`.sequence-tile[data-index="${tileIndex}"]`);
+                    tile.classList.add('active');
+                    
+                    setTimeout(() => {
+                        tile.classList.remove('active');
+                        
+                        if(i === currentPuzzle.data.sequence.length - 1) {
+                            setTimeout(() => {
+                                btn.textContent = 'ПОВТОРИ!';
+                                btn.onclick = checkSequence;
+                                currentPuzzle.data.showingSequence = false;
+                                
+                                // Активируем клики по клеткам
+                                document.querySelectorAll('.sequence-tile').forEach(tile => {
+                                    tile.onclick = () => selectSequenceTile(parseInt(tile.dataset.index));
+                                });
+                            }, 500);
+                        }
+                    }, 800);
+                }, delay);
+                delay += 1000;
+            });
+        }
+        
+        function selectSequenceTile(index) {
+            if(currentPuzzle.data.showingSequence || currentPuzzle.solved) return;
+            
+            const tile = document.querySelector(`.sequence-tile[data-index="${index}"]`);
+            tile.classList.add('active');
+            setTimeout(() => tile.classList.remove('active'), 300);
+            
+            currentPuzzle.data.playerSequence.push(index);
+            
+            // Проверяем на каждом шаге
+            const currentStep = currentPuzzle.data.playerSequence.length - 1;
+            if(currentPuzzle.data.playerSequence[currentStep] !== currentPuzzle.data.sequence[currentStep]) {
+                tile.classList.add('wrong');
+                setTimeout(() => {
+                    tile.classList.remove('wrong');
+                    endPuzzle(false);
+                }, 500);
+                return;
+            } else {
+                tile.classList.add('correct');
+                setTimeout(() => tile.classList.remove('correct'), 500);
+            }
+            
+            // Если последовательность полная
+            if(currentPuzzle.data.playerSequence.length === currentPuzzle.data.sequence.length) {
+                endPuzzle(true);
+            }
+        }
+        
+        function checkSequence() {
+            // Эта функция вызывается когда игрок нажимает кнопку "ПОВТОРИ"
+            // Мы уже переключились на другой обработчик
+        }
+        
+        // Головоломка "Собери пазл"
+        function createPuzzlePuzzle() {
+            const content = document.getElementById('puzzleContent');
+            content.innerHTML = `
+                <h2>🧩 Собери пазл!</h2>
+                <p>Кликай на клетки в правильном порядке!</p>
+                <p>Время: <span id="puzzleTimer">30</span>с</p>
+                <div class="puzzle-grid" id="puzzleGrid"></div>
+                <div style="margin-top: 20px;">
+                    <button class="modal-btn" onclick="checkPuzzle()">
+                        ПРОВЕРИТЬ
+                    </button>
+                </div>
+            `;
+            
+            const grid = document.getElementById('puzzleGrid');
+            grid.innerHTML = '';
+            
+            // Создаем 9 клеток
+            const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+            shuffleArray(numbers);
+            
+            currentPuzzle.data = {
+                correctOrder: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+                playerOrder: [],
+                cells: []
+            };
+            
+            for(let i = 0; i < 9; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'puzzle-piece';
+                cell.dataset.value = numbers[i];
+                cell.textContent = numbers[i];
+                cell.onclick = () => selectPuzzleCell(cell);
+                grid.appendChild(cell);
+                currentPuzzle.data.cells.push(cell);
+            }
+        }
+        
+        function selectPuzzleCell(cell) {
+            if(currentPuzzle.solved) return;
+            
+            const value = parseInt(cell.dataset.value);
+            
+            if(!currentPuzzle.data.playerOrder.includes(value)) {
+                currentPuzzle.data.playerOrder.push(value);
+                cell.classList.add('correct');
+                
+                // Проверяем, решена ли головоломка
+                if(arraysEqual(currentPuzzle.data.playerOrder, currentPuzzle.data.correctOrder)) {
+                    setTimeout(() => endPuzzle(true), 500);
+                }
+            }
+        }
+        
+        function checkPuzzle() {
+            if(arraysEqual(currentPuzzle.data.playerOrder, currentPuzzle.data.correctOrder)) {
+                endPuzzle(true);
+            } else {
+                showNotify('Порядок неверный! Попробуй снова.', 'error');
+            }
+        }
+        
+        // Головоломка "Найди отличия"
+        function createDifferencePuzzle() {
+            const content = document.getElementById('puzzleContent');
+            content.innerHTML = `
+                <h2>🧩 Найди отличия!</h2>
+                <p>Найди 3 отличия на изображениях!</p>
+                <p>Время: <span id="puzzleTimer">30</span>с</p>
+                <div class="difference-grid">
+                    <div class="difference-image" id="diffImage1">
+                        <!-- Отличия будут добавлены через JS -->
+                    </div>
+                    <div class="difference-image" id="diffImage2">
+                        <!-- Отличия будут добавлены через JS -->
+                    </div>
+                </div>
+                <p style="margin-top: 10px;">Найдено: <span id="foundCount">0</span>/3</p>
+                <div style="margin-top: 20px;">
+                    <button class="modal-btn" onclick="checkDifferences()">
+                        ПРОВЕРИТЬ
+                    </button>
+                </div>
+            `;
+            
+            // Создаем случайные позиции для отличий
+            currentPuzzle.data = {
+                differences: [],
+                found: []
+            };
+            
+            for(let i = 0; i < 3; i++) {
+                const diff = {
+                    x: Math.random() * 130 + 10,
+                    y: Math.random() * 130 + 10,
+                    found: false
+                };
+                currentPuzzle.data.differences.push(diff);
+                
+                // Добавляем точки на оба изображения
+                const dot1 = document.createElement('div');
+                dot1.className = 'difference-dot';
+                dot1.style.left = diff.x + 'px';
+                dot1.style.top = diff.y + 'px';
+                dot1.onclick = () => findDifference(i);
+                
+                const dot2 = document.createElement('div');
+                dot2.className = 'difference-dot';
+                dot2.style.left = diff.x + 'px';
+                dot2.style.top = diff.y + 'px';
+                dot2.onclick = () => findDifference(i);
+                
+                document.getElementById('diffImage1').appendChild(dot1);
+                document.getElementById('diffImage2').appendChild(dot2);
+            }
+        }
+        
+        function findDifference(index) {
+            if(currentPuzzle.solved || currentPuzzle.data.found.includes(index)) return;
+            
+            currentPuzzle.data.found.push(index);
+            currentPuzzle.data.differences[index].found = true;
+            
+            // Обновляем счетчик
+            document.getElementById('foundCount').textContent = currentPuzzle.data.found.length;
+            
+            // Помечаем найденные точки
+            document.querySelectorAll('.difference-dot').forEach((dot, i) => {
+                if(i % 2 === 0 && Math.floor(i/2) === index) {
+                    dot.classList.add('found');
+                }
+            });
+            
+            // Проверяем, все ли найдены
+            if(currentPuzzle.data.found.length === 3) {
+                setTimeout(() => endPuzzle(true), 500);
+            }
+        }
+        
+        function checkDifferences() {
+            if(currentPuzzle.data.found.length === 3) {
+                endPuzzle(true);
+            } else {
+                showNotify(`Найдено только ${currentPuzzle.data.found.length} из 3 отличий!`, 'error');
+            }
+        }
+        
+        // Завершение головоломки
+        function endPuzzle(success) {
+            clearInterval(currentPuzzle.timer);
+            document.getElementById('puzzleOverlay').style.display = 'none';
+            
+            if(success) {
+                // Награда за головоломку
+                const reward = Math.floor(Math.random() * 500) + 300;
+                gameData.visa += reward;
+                gameData.puzzlesSolved++;
+                
+                showNotify(`🧩 Головоломка решена! +${reward} VISA! Всего решено: ${gameData.puzzlesSolved}`, 'success');
+                
+                // Прогресс миссии
+                if(gameData.missions.puzzles.current < gameData.missions.puzzles.target) {
+                    gameData.missions.puzzles.current++;
+                    updateMissions();
+                }
+            } else {
+                showNotify('Время вышло! Попробуй в следующий раз.', 'error');
+            }
+            
+            currentPuzzle.solved = true;
+            saveGame();
+            updateUI();
+        }
+        
+        // Вспомогательные функции
+        function shuffleArray(array) {
+            for(let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+        
+        function arraysEqual(a, b) {
+            if(a.length !== b.length) return false;
+            for(let i = 0; i < a.length; i++) {
+                if(a[i] !== b[i]) return false;
+            }
+            return true;
+        }
+        
+        // Остальные функции (buyUpgrade, buyBoost, updateMissions и т.д.) остаются похожими
+        // Но нужно добавить обработку нового типа улучшения 'puzzle'
+        
         function buyUpgrade(type) {
             const upgrade = gameData.upgrades[type];
             
@@ -1080,24 +1537,27 @@
                     upgrade.level++;
                     upgrade.cost = Math.floor(upgrade.cost * 2.2);
                     break;
+                    
+                case 'puzzle':
+                    gameData.puzzleChance += 0.0005;
+                    upgrade.level++;
+                    upgrade.cost = Math.floor(upgrade.cost * 2.5);
+                    break;
             }
             
-            // Прогресс миссии
-            if(gameData.missions.upgrades.current < gameData.missions.upgrades.target) {
+            // Прогресс миссии улучшений
+            if(gameData.missions.upgrades && gameData.missions.upgrades.current < gameData.missions.upgrades.target) {
                 gameData.missions.upgrades.current++;
                 updateMissions();
             }
             
             saveGame();
             updateUI();
-            showNotify('Улучшение куплено!');
+            showNotify('Улучшение куплено!', 'success');
         }
         
-        // Покупка буста
         function buyBoost(type) {
-            let cost = 0;
-            let duration = 0;
-            let multiplier = 2;
+            let cost = 0, duration = 0, multiplier = 2;
             
             switch(type) {
                 case 'click':
@@ -1106,12 +1566,17 @@
                     break;
                 case 'chance':
                     cost = 2000;
-                    duration = 300; // 5 минут
+                    duration = 300;
                     break;
                 case 'energy':
                     cost = 5000;
                     duration = 60;
-                    multiplier = 0; // Для энергии нет множителя
+                    multiplier = 0;
+                    break;
+                case 'puzzle':
+                    cost = 2500;
+                    duration = 600;
+                    multiplier = 3;
                     break;
             }
             
@@ -1125,10 +1590,9 @@
             
             saveGame();
             updateUI();
-            showNotify('Буст активирован!');
+            showNotify('Буст активирован!', 'success');
         }
         
-        // Активация буста
         function activateBoost(type, duration, multiplier = 2) {
             gameData.boosts[type].active = true;
             gameData.boosts[type].endTime = Date.now() + (duration * 1000);
@@ -1137,50 +1601,7 @@
             updateBoosts();
         }
         
-        // Обновление бустов
-        function updateBoosts() {
-            const now = Date.now();
-            const boostsContainer = document.getElementById('boostsContainer');
-            let html = '';
-            
-            for(const [type, boost] of Object.entries(gameData.boosts)) {
-                if(boost.active && now < boost.endTime) {
-                    const timeLeft = Math.ceil((boost.endTime - now) / 1000);
-                    let icon = '⚡';
-                    let label = '';
-                    
-                    if(type === 'click') {
-                        icon = '⚡';
-                        label = `x${boost.multiplier} кликов`;
-                    } else if(type === 'chance') {
-                        icon = '🎁';
-                        label = `x${boost.multiplier} шанс`;
-                    } else if(type === 'energy') {
-                        icon = '♾️';
-                        label = 'Беск. энергия';
-                    }
-                    
-                    html += `
-                        <div class="boost-item">
-                            <div style="font-size: 20px;">${icon}</div>
-                            <div>${label}</div>
-                            <div class="boost-timer">${timeLeft}с</div>
-                        </div>
-                    `;
-                }
-            }
-            
-            boostsContainer.innerHTML = html;
-            
-            // Проверяем истекшие бусты
-            Object.keys(gameData.boosts).forEach(type => {
-                if(gameData.boosts[type].active && now >= gameData.boosts[type].endTime) {
-                    gameData.boosts[type].active = false;
-                }
-            });
-        }
-        
-        // Миссии
+        // Обновление миссий
         function updateMissions() {
             // Клики
             const clicksProgress = (gameData.missions.clicks.current / gameData.missions.clicks.target) * 100;
@@ -1188,11 +1609,11 @@
             document.getElementById('missionClicksBar').style.width = clicksProgress + '%';
             document.getElementById('missionClicksBtn').disabled = gameData.missions.clicks.current < gameData.missions.clicks.target || gameData.missions.clicks.completed;
             
-            // Улучшения
-            const upgradesProgress = (gameData.missions.upgrades.current / gameData.missions.upgrades.target) * 100;
-            document.getElementById('missionUpgrades').textContent = `${gameData.missions.upgrades.current}/${gameData.missions.upgrades.target}`;
-            document.getElementById('missionUpgradesBar').style.width = upgradesProgress + '%';
-            document.getElementById('missionUpgradesBtn').disabled = gameData.missions.upgrades.current < gameData.missions.upgrades.target || gameData.missions.upgrades.completed;
+            // Головоломки
+            const puzzlesProgress = (gameData.missions.puzzles.current / gameData.missions.puzzles.target) * 100;
+            document.getElementById('missionPuzzles').textContent = `${gameData.missions.puzzles.current}/${gameData.missions.puzzles.target}`;
+            document.getElementById('missionPuzzlesBar').style.width = puzzlesProgress + '%';
+            document.getElementById('missionPuzzlesBtn').disabled = gameData.missions.puzzles.current < gameData.missions.puzzles.target || gameData.missions.puzzles.completed;
             
             // Подарки
             const giftsProgress = (gameData.missions.gifts.current / gameData.missions.gifts.target) * 100;
@@ -1206,89 +1627,15 @@
             if(mission.current >= mission.target && !mission.completed) {
                 gameData.visa += mission.reward;
                 mission.completed = true;
-                showNotify(`🎉 Миссия выполнена: +${mission.reward} VISA!`);
+                showNotify(`🎉 Миссия выполнена: +${mission.reward} VISA!`, 'success');
                 saveGame();
                 updateUI();
                 updateMissions();
             }
         }
         
-        // Ежедневные награды
-        function updateDailyStatus() {
-            const now = Date.now();
-            const lastClaim = gameData.daily.lastClaim;
-            const dayInMs = 24 * 60 * 60 * 1000;
-            
-            // Проверяем, прошло ли больше 20 часов
-            if(now - lastClaim > 20 * 60 * 60 * 1000) {
-                document.getElementById('dailyStatus').textContent = 'Ежедневная награда доступна!';
-            } else {
-                const hoursLeft = Math.ceil((20 * 60 * 60 * 1000 - (now - lastClaim)) / (60 * 60 * 1000));
-                document.getElementById('dailyStatus').textContent = `Следующая награда через ${hoursLeft} ч`;
-            }
-        }
-        
-        function claimDaily(day) {
-            const now = Date.now();
-            const lastClaim = gameData.daily.lastClaim;
-            const dayInMs = 24 * 60 * 60 * 1000;
-            
-            // Проверяем, можно ли забрать
-            if(now - lastClaim < 20 * 60 * 60 * 1000 && day > 0) {
-                showNotify('Подожди до завтра!', 'error');
-                return;
-            }
-            
-            // Награды по дням
-            const rewards = [100, 200, 300];
-            const reward = rewards[day] || 100;
-            
-            gameData.visa += reward;
-            gameData.daily.lastClaim = now;
-            gameData.daily.claimed[day] = true;
-            
-            // Если день 3, даем буст
-            if(day === 2) {
-                activateBoost('click', 60, 2);
-            }
-            
-            // Обновляем кнопку
-            document.getElementById(`dailyBtn${day}`).disabled = true;
-            document.getElementById(`dailyBtn${day}`).textContent = 'Получено';
-            
-            saveGame();
-            updateUI();
-            updateDailyStatus();
-            
-            showNotify(`🎁 Ежедневная награда: +${reward} VISA!`);
-        }
-        
-        // Обновление энергии
-        function updateEnergy() {
-            if(gameData.boosts.energy.active) return;
-            
-            const now = Date.now();
-            const timeDiff = (now - gameData.lastEnergyUpdate) / 1000 / 60;
-            
-            if(timeDiff > 0) {
-                const energyGain = Math.floor((timeDiff / 20) * gameData.maxEnergy);
-                if(energyGain > 0) {
-                    gameData.energy = Math.min(gameData.maxEnergy, gameData.energy + energyGain);
-                    gameData.lastEnergyUpdate = now;
-                }
-            }
-        }
-        
-        // Сохранение игры
-        function saveGame() {
-            localStorage.setItem('visaclicker_current_user', JSON.stringify(gameData));
-        }
-        
         // Обновление UI
         function updateUI() {
-            updateEnergy();
-            updateBoosts();
-            
             // Никнейм
             document.getElementById('displayUsername').textContent = gameData.username || 'Игрок';
             
@@ -1296,7 +1643,7 @@
             document.getElementById('visaCount').textContent = gameData.visa;
             document.getElementById('levelCount').textContent = gameData.level;
             document.getElementById('clicksCount').textContent = gameData.totalClicks;
-            document.getElementById('giftsCount').textContent = gameData.gifts;
+            document.getElementById('puzzlesCount').textContent = gameData.puzzlesSolved;
             
             // Прогресс
             const xpPercent = (gameData.xp / gameData.xpNeeded) * 100;
@@ -1314,41 +1661,37 @@
                 clickMultiplier *= gameData.boosts.click.multiplier;
             }
             
-            let chanceMultiplier = gameData.giftChance * 100;
+            let giftChance = gameData.giftChance * 100;
             if(gameData.boosts.chance.active) {
-                chanceMultiplier *= gameData.boosts.chance.multiplier;
+                giftChance *= gameData.boosts.chance.multiplier;
+            }
+            
+            let puzzleChance = gameData.puzzleChance * 100;
+            if(gameData.boosts.puzzle.active) {
+                puzzleChance *= gameData.boosts.puzzle.multiplier;
             }
             
             document.getElementById('powerValue').textContent = `x${clickMultiplier}`;
-            document.getElementById('chanceValue').textContent = chanceMultiplier.toFixed(2) + '%';
-            
-            // Множители
-            let multiplierText = '';
-            if(gameData.boosts.click.active) {
-                multiplierText += `⚡ x${gameData.boosts.click.multiplier} кликов `;
-            }
-            if(gameData.boosts.chance.active) {
-                multiplierText += `🎁 x${gameData.boosts.chance.multiplier} шанс `;
-            }
-            if(gameData.boosts.energy.active) {
-                multiplierText += `♾️ беск. энергия `;
-            }
-            document.getElementById('multiplierText').textContent = multiplierText;
+            document.getElementById('chanceValue').textContent = giftChance.toFixed(2) + '%';
+            document.getElementById('puzzleChanceValue').textContent = puzzleChance.toFixed(2) + '%';
             
             // Улучшения
             document.getElementById('clickPower').textContent = gameData.clickPower;
             document.getElementById('maxEnergy').textContent = gameData.maxEnergy;
             document.getElementById('giftChanceValue').textContent = (gameData.giftChance * 100).toFixed(2) + '%';
+            document.getElementById('puzzleUpgradeChance').textContent = (gameData.puzzleChance * 100).toFixed(2) + '%';
             
             // Кнопки улучшений
             document.getElementById('clickBtn').textContent = gameData.upgrades.click.cost + ' VISA';
             document.getElementById('energyBtn').textContent = gameData.upgrades.energy.cost + ' VISA';
             document.getElementById('chanceBtn').textContent = gameData.upgrades.chance.cost + ' VISA';
+            document.getElementById('puzzleBtn').textContent = gameData.upgrades.puzzle.cost + ' VISA';
             
             // Отключаем кнопки если не хватает денег
             document.getElementById('clickBtn').disabled = gameData.visa < gameData.upgrades.click.cost;
             document.getElementById('energyBtn').disabled = gameData.visa < gameData.upgrades.energy.cost;
             document.getElementById('chanceBtn').disabled = gameData.visa < gameData.upgrades.chance.cost;
+            document.getElementById('puzzleBtn').disabled = gameData.visa < gameData.upgrades.puzzle.cost;
         }
         
         // Показать экран
@@ -1373,47 +1716,62 @@
                 document.querySelector(`.menu-btn:nth-child(${btnIndex})`).classList.add('active');
             }
             
-            // Обновляем миссии при переходе
-            if(screen === 'missions') {
-                updateMissions();
-            }
-            if(screen === 'daily') {
-                updateDailyStatus();
-            }
+            // Обновляем при переходе
+            if(screen === 'missions') updateMissions();
+            if(screen === 'daily') updateDailyStatus();
         }
         
-        // Загрузка сохраненной игры
+        // Сохранение игры
+        function saveGame() {
+            localStorage.setItem('visaclicker_current_user', JSON.stringify(gameData));
+        }
+        
+        // Загрузка игры
         window.onload = function() {
             const savedUser = localStorage.getItem('visaclicker_current_user');
             
             if(savedUser) {
                 try {
                     gameData = JSON.parse(savedUser);
+                    // Проверяем, есть ли новые поля
+                    if(!gameData.puzzlesSolved) gameData.puzzlesSolved = 0;
+                    if(!gameData.puzzleChance) gameData.puzzleChance = 0.002;
+                    if(!gameData.upgrades.puzzle) {
+                        gameData.upgrades.puzzle = { level: 1, cost: 1500 };
+                    }
+                    if(!gameData.boosts.puzzle) {
+                        gameData.boosts.puzzle = { active: false, endTime: 0, multiplier: 3 };
+                    }
+                    if(!gameData.missions.puzzles) {
+                        gameData.missions.puzzles = { current: 0, target: 5, completed: false, reward: 1500 };
+                    }
+                    
                     document.getElementById('loginModal').style.display = 'none';
                     document.getElementById('gameInterface').style.display = 'block';
                     showScreen('clicker');
                     updateUI();
                     updateMissions();
                     updateDailyStatus();
+                    
+                    showNotify(`С возвращением, ${gameData.username}!`, 'success');
                 } catch(e) {
                     console.error('Ошибка загрузки:', e);
                 }
             }
             
-            // Обновление каждую минуту
+            // Автоматическое обновление
             setInterval(() => {
                 updateUI();
-            }, 60000);
-            
-            // Обновление бустов каждую секунду
-            setInterval(updateBoosts, 1000);
-            
-            // Автосохранение каждые 30 секунд
-            setInterval(saveGame, 30000);
-            
-            // Проверка мини-игры каждую минуту
-            setInterval(checkMinigame, 60000);
+                saveGame();
+            }, 30000);
         };
+        
+        // Добавляем возможность ввода по Enter
+        document.getElementById('usernameInput').addEventListener('keypress', function(e) {
+            if(e.key === 'Enter') {
+                registerUser();
+            }
+        });
     </script>
 </body>
 </html>
